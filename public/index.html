@@ -327,6 +327,18 @@
   /* Revealed cards: 30% transparent so remaining cards stand out */
   .card.flipped { opacity: 0.7; }
 
+  /* Non-captain unrevealed cards: text centered + 2x larger */
+  .card:not(.hint-red):not(.hint-blue):not(.hint-neutral):not(.hint-assassin) .card-front {
+    justify-content: center;
+  }
+  .card:not(.hint-red):not(.hint-blue):not(.hint-neutral):not(.hint-assassin) .card-front .card-word {
+    font-size: clamp(.88rem, 4.5vw, 1.25rem);
+    background: transparent;
+    border-top: none;
+    padding: 0 6px;
+    color: var(--dark);
+  }
+
   /* Back: revealed card by type */
   .card.revealed-red1     .card-back { background-image: url(/img/card-red1.png); }
   .card.revealed-red2     .card-back { background-image: url(/img/card-red2.png); }
