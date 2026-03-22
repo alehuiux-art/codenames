@@ -260,5 +260,15 @@ io.on('connection', sock => {
   });
 });
 
+// Debug endpoint – shows active rooms
+app.get('/_debug/rooms', (req, res) => {
+  const data = [...rooms.entries()].map(([id, r]) => ({
+    id,
+    started: r.started,
+    players: r.players.map(p => p.name),
+  }));
+  res.json({ total: rooms.size, rooms: data });
+});
+
 const PORT = process.env.PORT || 3000;
-httpSv.listen(PORT, () => console.log(`Коднеймс запущен → http://localhost:${PORT}`));
+httpSv.listen(PORT, () => console.log(`CatNames запущен → http://localhost:${PORT}`));
