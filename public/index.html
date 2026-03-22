@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Codenames</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream:   #f0e0b8;
+    --cream2:  #e4d098;
+    --paper:   #f8f0d8;
+    --ink:     #1a0e00;
+    --stamp:   #b08840;
+    --red:     #c0392b;
+    --red2:    #8b1010;
+    --blue:    #1a5da0;
+    --blue2:   #0a2a50;
+    --neutral: #7a6030;
+    --gold:    #d4a020;
+    --goldf:   #f0c840;
+    --sky1:    #0d2a50;
+    --sky2:    #1a4a80;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: 'Oswald', 'Arial Narrow', Arial, sans-serif;
+    background: linear-gradient(180deg, var(--sky1) 0%, var(--sky2) 60%, #122040 100%);
+    color: #eee;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    overflow-x: hidden;
+  }
+
+  body {
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 100%;
+    padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0)
+             env(safe-area-inset-bottom,0) env(safe-area-inset-left,0);
+    position: relative;
+  }
+
+  /* ── City silhouette (fixed behind everything) ── */
+  #city-svg {
+    position: fixed; bottom: 0; left: 0; width: 100%;
+    height: clamp(80px, 18vw, 160px);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── Screens ── */
+  .screen {
+    display: none; flex-direction: column; align-items: center;
+    width: 100%; max-width: 680px;
+    padding: 14px 10px;
+    position: relative; z-index: 1;
+  }
+  .screen.active { display: flex; }
+
+  /* ── Typography ── */
+  .logo {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: clamp(2.6rem, 11vw, 4.2rem);
+    letter-spacing: .16em; color: #fff;
+    text-shadow: 0 3px 0 rgba(0,0,0,.5), 0 0 40px rgba(255,220,80,.15);
+    line-height: 1; margin-bottom: 2px;
+  }
+  .logo span { color: var(--goldf); }
+  .tagline { font-size: .75rem; letter-spacing: .14em; color: rgba(255,255,255,.4); margin-bottom: 22px; text-transform: uppercase; }
+
+  /* ── Glass panel ── */
+  .panel {
+    background: rgba(8,18,40,.72);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 16px; padding: 24px 20px;
+    width: 100%; backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .form-col { display: flex; flex-direction: column; gap: 14px; }
+  .row { display: flex; gap: 10px; }
+
+  label { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.45); margin-bottom: 5px; display: block; }
+
+  input[type=text] {
+    background: rgba(255,255,255,.07);
+    border: 1.5px solid rgba(255,255,255,.18);
+    border-radius: 9px; color: #fff;
+    font-family: 'Oswald', sans-serif; font-size: 16px;
+    padding: 13px 15px; outline: none; width: 100%;
+    transition: border-color .2s;
+  }
+  input[type=text]::placeholder { color: rgba(255,255,255,.28); }
+  input[type=text]:focus { border-color: var(--goldf); }
+
+  .divider { display: flex; align-items: center; gap: 10px; }
+  .divider hr { flex: 1; border: none; border-top: 1px solid rgba(255,255,255,.1); }
+  .divider span { font-size: .7rem; color: rgba(255,255,255,.25); letter-spacing: .1em; }
+
+  /* ── Buttons ── */
+  button {
+    border: none; border-radius: 9px;
+    font-family: 'Oswald', sans-serif;
+    font-size: .95rem; font-weight: 600; letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 13px 22px; cursor: pointer;
+    min-height: 50px; touch-action: manipulation;
+    transition: opacity .15s, transform .1s, box-shadow .2s;
+  }
+  button:active { opacity: .82; transform: scale(.96); }
+  button:disabled { opacity: .3; pointer-events: none; }
+
+  .btn-gold  { background: var(--gold); color: #1a0800; box-shadow: 0 4px 14px rgba(212,160,32,.4); }
+  .btn-gold:hover { box-shadow: 0 4px 20px rgba(212,160,32,.6); }
+  .btn-green { background: #196b38; color: #a0ffc0; border: 1px solid #2aaa5a; }
+  .btn-dark  { background: rgba(255,255,255,.08); color: rgba(255,255,255,.85); border: 1px solid rgba(255,255,255,.15); }
+  .btn-red   { background: var(--red2); color: #ffaaaa; border: 1px solid var(--red); }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: calc(16px + env(safe-area-inset-bottom));
+    left: 50%; transform: translateX(-50%);
+    background: #5a0808; color: #ffaaaa;
+    padding: 11px 22px; border-radius: 9px;
+    font-family: 'Oswald', sans-serif; font-size: .9rem; font-weight: 600; letter-spacing: .04em;
+    opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 9999;
+    white-space: nowrap; max-width: 90vw; text-align: center;
+  }
+  #toast.show { opacity: 1; }
+
+  /* ════════════════════════════════════
+     LOBBY
+     ════════════════════════════════════ */
+  .lobby-code-block { text-align: center; margin-bottom: 16px; }
+  .lobby-code-label { font-size: .68rem; letter-spacing: .14em; color: rgba(255,255,255,.4); text-transform: uppercase; margin-bottom: 4px; }
+  .lobby-code {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: clamp(2.8rem, 13vw, 4.4rem);
+    letter-spacing: .32em; color: var(--goldf);
+    text-shadow: 0 0 24px rgba(240,200,64,.5);
+    line-height: 1;
+    animation: code-glow 3s ease-in-out infinite;
+  }
+  @keyframes code-glow {
+    0%,100% { text-shadow: 0 0 20px rgba(240,200,64,.3); }
+    50%      { text-shadow: 0 0 35px rgba(240,200,64,.65); }
+  }
+
+  .invite-row {
+    background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.09);
+    border-radius: 10px; padding: 10px 14px;
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; margin-bottom: 16px;
+  }
+  .invite-url { flex: 1; font-size: .78rem; color: rgba(255,255,255,.45); word-break: break-all; cursor: pointer; }
+  .btn-copy { padding: 7px 14px; font-size: .78rem; min-height: 34px; background: var(--gold); color: #1a0800; border-radius: 7px; }
+
+  .players-lobby-list {
+    width: 100%;
+    background: rgba(0,0,0,.28);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px; padding: 10px 12px;
+    margin-bottom: 14px;
+    min-height: 56px;
+  }
+  .lobby-player-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.06);
+    font-size: .9rem;
+    animation: slide-in .3s ease both;
+  }
+  .lobby-player-row:last-child { border-bottom: none; }
+  @keyframes slide-in { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:none; } }
+  .lobby-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
+  .you-tag { font-size: .68rem; color: var(--goldf); }
+
+  .lobby-note { font-size: .8rem; color: rgba(255,255,255,.38); letter-spacing: .04em; text-align: center; margin-bottom: 6px; }
+  .lobby-status { font-size: .8rem; color: rgba(255,255,255,.4); text-align: center; margin-bottom: 14px; }
+
+  /* ════════════════════════════════════
+     ROLE REVEAL overlay
+     ════════════════════════════════════ */
+  #role-reveal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.92); z-index: 500;
+    align-items: center; justify-content: center;
+    flex-direction: column;
+  }
+  #role-reveal.show { display: flex; }
+
+  .dossier {
+    width: min(320px, 88vw);
+    background: #f5ecd4;
+    border: 3px solid #8a7040;
+    border-radius: 6px;
+    padding: 28px 24px;
+    text-align: center;
+    color: #1a0e00;
+    position: relative;
+    box-shadow: 0 0 0 8px rgba(138,112,64,.25), 0 20px 60px rgba(0,0,0,.6);
+    animation: dossier-appear .5s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes dossier-appear {
+    from { opacity:0; transform: scale(.8) rotate(-3deg); }
+    to   { opacity:1; transform: none; }
+  }
+
+  .dossier::before {
+    content: '';
+    position: absolute; inset: 5px;
+    border: 1px dashed rgba(138,112,64,.4);
+    border-radius: 3px; pointer-events: none;
+  }
+
+  .dossier-stamp {
+    position: absolute; top: 12px; right: 12px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: .65rem; letter-spacing: .08em;
+    color: rgba(180,30,30,.7);
+    border: 2px solid rgba(180,30,30,.6);
+    padding: 2px 6px; border-radius: 2px;
+    transform: rotate(12deg);
+  }
+
+  .dossier-label {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: .78rem; letter-spacing: .22em; color: rgba(30,20,0,.5);
+    margin-bottom: 10px; text-transform: uppercase;
+  }
+  .dossier-team {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: clamp(2rem, 10vw, 3rem);
+    letter-spacing: .12em;
+    margin-bottom: 6px;
+  }
+  .dossier-team.red  { color: #c0392b; }
+  .dossier-team.blue { color: #1a5da0; }
+
+  .dossier-role {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: 1.5rem; letter-spacing: .1em;
+    background: #1a0e00; color: #f0e0b8;
+    display: inline-block; padding: 4px 18px; border-radius: 3px;
+    margin-bottom: 14px;
+  }
+  .dossier-desc { font-size: .82rem; color: rgba(30,20,0,.7); line-height: 1.5; margin-bottom: 18px; }
+  .dossier-btn {
+    background: #1a0e00; color: #f0e0b8;
+    font-family: 'Oswald', sans-serif;
+    font-size: .85rem; letter-spacing: .1em;
+    padding: 10px 24px; border-radius: 4px;
+    border: none; cursor: pointer;
+    text-transform: uppercase; font-weight: 600;
+    transition: background .2s;
+  }
+  .dossier-btn:hover { background: #2a1e08; }
+
+  /* ════════════════════════════════════
+     GAME SCREEN
+     ════════════════════════════════════ */
+  #screen-game { padding: 0; gap: 0; }
+
+  /* Turn banner */
+  #turn-banner {
+    width: 100%; padding: 11px 14px 9px;
+    text-align: center; position: relative; overflow: hidden;
+    flex-shrink: 0;
+    transition: background .5s;
+  }
+  #turn-banner.red  { background: linear-gradient(135deg, #3a0808, #6a1010); }
+  #turn-banner.blue { background: linear-gradient(135deg, #081830, #0e2a58); }
+  #turn-banner.mine.red  { background: linear-gradient(135deg, #7a1010, #b01818); animation: banner-pulse-red 2.5s ease-in-out infinite; }
+  #turn-banner.mine.blue { background: linear-gradient(135deg, #0e2a58, #1848a0); animation: banner-pulse-blue 2.5s ease-in-out infinite; }
+
+  @keyframes banner-pulse-red  { 0%,100%{box-shadow:0 4px 20px rgba(180,20,20,.3)} 50%{box-shadow:0 4px 30px rgba(220,40,40,.55)} }
+  @keyframes banner-pulse-blue { 0%,100%{box-shadow:0 4px 20px rgba(20,80,180,.3)} 50%{box-shadow:0 4px 30px rgba(30,100,220,.55)} }
+
+  #turn-banner::after {
+    content:''; position:absolute; inset:0;
+    background: repeating-linear-gradient(-55deg,transparent,transparent 12px,rgba(255,255,255,.025) 12px,rgba(255,255,255,.025) 13px);
+    pointer-events:none;
+  }
+
+  .bn-label {
+    font-size: clamp(.58rem, 2.5vw, .7rem);
+    letter-spacing: .18em; text-transform: uppercase;
+    color: rgba(255,255,255,.55); margin-bottom: 1px;
+  }
+  .bn-team {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: clamp(1.5rem, 6.5vw, 2.2rem);
+    letter-spacing: .08em; line-height: 1; color: #fff;
+    text-shadow: 0 2px 10px rgba(0,0,0,.4);
+  }
+  #turn-banner.red  .bn-team { color: #ffb0b0; }
+  #turn-banner.blue .bn-team { color: #90c8ff; }
+  #turn-banner.mine .bn-team { color: #fff; }
+
+  .bn-action {
+    font-size: clamp(.66rem, 2.8vw, .8rem);
+    margin-top: 3px; color: rgba(255,255,255,.65); letter-spacing: .04em;
+  }
+  #turn-banner.mine .bn-action { color: rgba(255,255,255,.9); font-weight: 600; }
+
+  /* Scores */
+  #scorebar { display: flex; width: 100%; flex-shrink: 0; }
+  .sc {
+    flex: 1; padding: 7px 0; text-align: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(.72rem, 3.2vw, .92rem); font-weight: 700; letter-spacing: .06em;
+    transition: opacity .35s;
+  }
+  .sc.red  { background: rgba(180,30,30,.18); color: #e88080; }
+  .sc.blue { background: rgba(26,80,160,.22); color: #80b8f0; }
+  .sc.active { opacity: 1; }
+  .sc:not(.active) { opacity: .35; }
+
+  /* Player chips */
+  #game-players {
+    display: flex; gap: 5px; padding: 5px 8px 4px;
+    overflow-x: auto; scrollbar-width: none; flex-shrink: 0; width: 100%;
+  }
+  #game-players::-webkit-scrollbar { display: none; }
+  .gp {
+    display: flex; align-items: center; gap: 4px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 20px; padding: 3px 10px;
+    font-size: .68rem; white-space: nowrap; flex-shrink: 0; color: rgba(255,255,255,.65);
+  }
+  .gp.red  { border-color: rgba(180,40,40,.5); }
+  .gp.blue { border-color: rgba(30,90,190,.5); }
+  .gp.me   { border-color: rgba(210,160,30,.6); color: #fff; }
+  .gp.off  { opacity: .3; }
+  .gp .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .gp.red  .dot { background: #e88080; }
+  .gp.blue .dot { background: #80b8f0; }
+  .gp .star { color: var(--goldf); font-size: .62rem; }
+
+  /* ── THE BOARD ── */
+  #board-wrap { padding: 5px 6px 3px; width: 100%; flex: 1; }
+  #grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; width: 100%; }
+
+  /* ── CARD ── */
+  .card {
+    position: relative;
+    aspect-ratio: 1 / .7;
+    border-radius: 5px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-end;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transform-style: preserve-3d;
+    perspective: 600px;
+  }
+
+  /* Card inner wrapper (for flip) */
+  .card-inner {
+    position: absolute; inset: 0;
+    transition: transform .55s cubic-bezier(.4,0,.2,1);
+    transform-style: preserve-3d;
+  }
+  .card.flipped .card-inner { transform: rotateY(180deg); }
+
+  /* Front face = cream unrevealed */
+  .card-front, .card-back {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 5px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-end;
+  }
+
+  .card-back { transform: rotateY(180deg); }
+
+  /* FRONT (unrevealed) */
+  .card-front {
+    background: linear-gradient(160deg, var(--paper) 0%, var(--cream) 100%);
+    border: 2px solid var(--stamp);
+    box-shadow: 0 2px 6px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.7);
+  }
+
+  /* Inner dashed stamp border */
+  .card-front::before {
+    content: '';
+    position: absolute; inset: 4px;
+    border: 1px dashed rgba(160,110,30,.28);
+    border-radius: 3px; pointer-events: none; z-index: 2;
+  }
+
+  /* Stamp corner decoration */
+  .card-front::after {
+    content: '';
+    position: absolute; top: 5px; right: 5px;
+    width: 14px; height: 18px;
+    background: linear-gradient(135deg, #f0d888, #d4a820);
+    border: 1px solid var(--stamp); border-radius: 1px;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.35);
+    z-index: 2;
+  }
+
+  /* Captain color tints (front) */
+  .card.hint-red    .card-front { background: linear-gradient(160deg, #f5d0c0, #e8b8a0); border-color: var(--red); box-shadow: 0 2px 10px rgba(180,40,30,.4), inset 0 1px 0 rgba(255,255,255,.5); }
+  .card.hint-blue   .card-front { background: linear-gradient(160deg, #c8d8f5, #a8c0e8); border-color: var(--blue); box-shadow: 0 2px 10px rgba(30,90,180,.4), inset 0 1px 0 rgba(255,255,255,.5); }
+  .card.hint-neutral .card-front { background: linear-gradient(160deg, #e0d0a8, #c8b888); border-color: #806830; }
+  .card.hint-assassin .card-front { background: linear-gradient(160deg, #b8b0a8, #989088); border-color: #404040; }
+
+  .front-word {
+    position: relative; z-index: 3;
+    font-family: 'Oswald', 'Arial Narrow', Arial, sans-serif;
+    font-size: clamp(.52rem, 2.4vw, .74rem);
+    font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ink); text-align: center; line-height: 1.2;
+    padding: 0 6px 6px;
+  }
+
+  /* BACK (revealed) */
+  .card-back {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,.4);
+  }
+  .card.revealed-red     .card-back { background: linear-gradient(175deg, #6a0808 0%, #b01818 55%, #8a1010 100%); }
+  .card.revealed-blue    .card-back { background: linear-gradient(175deg, #061830 0%, #1450a0 55%, #0c2a60 100%); }
+  .card.revealed-neutral .card-back { background: linear-gradient(175deg, #382010 0%, #704828 55%, #4a3018 100%); }
+  .card.revealed-assassin .card-back { background: linear-gradient(175deg, #040408 0%, #181018 100%); }
+
+  .back-portrait {
+    position: absolute; inset: 0;
+    display: flex; align-items: flex-end; justify-content: center;
+    overflow: hidden;
+  }
+  .back-portrait svg { width: 70%; height: 90%; }
+
+  .back-word {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    text-align: center; z-index: 3;
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(.48rem, 2vw, .65rem);
+    font-weight: 500; letter-spacing: .08em; text-transform: uppercase;
+    padding: 0 4px 3px;
+  }
+  .card.revealed-red     .back-word { color: rgba(255,200,200,.7); }
+  .card.revealed-blue    .back-word { color: rgba(180,220,255,.7); }
+  .card.revealed-neutral .back-word { color: rgba(220,190,140,.7); }
+  .card.revealed-assassin .back-word { color: rgba(120,100,100,.5); }
+
+  /* Shine on revealed card */
+  .card-back::before {
+    content: '';
+    position: absolute; top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
+    animation: card-shine 4s ease-in-out infinite;
+  }
+  @keyframes card-shine { 0%,100%{left:-100%} 40%{left:200%} }
+
+  /* Clickable */
+  .card.clickable { cursor: pointer; }
+  .card.clickable:active .card-inner { transform: scale(.93); }
+  .card.clickable .card-front { transition: box-shadow .15s; }
+  .card.clickable:hover .card-front { box-shadow: 0 4px 14px rgba(0,0,0,.4), 0 0 0 2px rgba(255,220,100,.4), inset 0 1px 0 rgba(255,255,255,.7); }
+
+  /* Deal animation */
+  @keyframes deal-in {
+    from { opacity:0; transform:translateY(-16px) scale(.85); }
+    to   { opacity:1; transform:none; }
+  }
+  .card.dealing { animation: deal-in .4s cubic-bezier(.22,1,.36,1) both; }
+
+  /* Controls */
+  #game-controls {
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    width: 100%; display: flex; gap: 7px; flex-shrink: 0;
+  }
+  #btn-end-turn { flex: 1; font-size: clamp(.8rem, 3.5vw, .95rem); padding: 13px; }
+  #btn-restart  { padding: 13px 14px; font-size: clamp(.75rem, 3vw, .9rem); }
+
+  /* ════════════════════════════════════
+     WIN OVERLAY
+     ════════════════════════════════════ */
+  #win-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.9); z-index: 400;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; padding: 24px; text-align: center;
+  }
+  #win-overlay.show { display: flex; }
+
+  .win-icon { font-size: 4rem; line-height: 1; animation: win-bounce .6s cubic-bezier(.22,1,.36,1) both; animation-delay: .1s; opacity: 0; }
+  #win-overlay.show .win-icon { opacity: 1; }
+
+  @keyframes win-bounce { from{opacity:0;transform:scale(.4) rotate(-15deg)} to{opacity:1;transform:none} }
+
+  .win-title {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: clamp(1.8rem, 9vw, 3rem);
+    letter-spacing: .1em;
+    animation: win-bounce .6s cubic-bezier(.22,1,.36,1) both; animation-delay: .2s; opacity: 0;
+  }
+  #win-overlay.show .win-title { opacity: 1; }
+  .win-title.red  { color: #e88080; text-shadow: 0 0 30px rgba(200,50,50,.6); }
+  .win-title.blue { color: #80b8f0; text-shadow: 0 0 30px rgba(50,100,220,.6); }
+
+  .win-reason {
+    font-size: .88rem; color: rgba(255,255,255,.5); max-width: 280px; letter-spacing: .03em;
+    animation: win-bounce .6s cubic-bezier(.22,1,.36,1) both; animation-delay: .3s; opacity: 0;
+  }
+  #win-overlay.show .win-reason { opacity: 1; }
+
+  .win-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+  .win-btns button { font-size: .9rem; padding: 13px 22px; animation: win-bounce .6s cubic-bezier(.22,1,.36,1) both; animation-delay: .4s; opacity:0; }
+  #win-overlay.show .win-btns button { opacity: 1; }
+
+  /* Confetti */
+  .confetti {
+    position: fixed; top: -12px; z-index: 450;
+    width: 9px; height: 9px; border-radius: 2px;
+    animation: confetti-fall linear forwards;
+  }
+  @keyframes confetti-fall {
+    0%   { transform: translateY(0) rotateZ(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotateZ(720deg); opacity: 0; }
+  }
+  </style>
+</head>
+<body>
+
+<!-- City SVG -->
+<svg id="city-svg" viewBox="0 0 800 160" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+  <g fill="#06101e" opacity="0.9">
+    <rect x="0" y="100" width="800" height="60"/>
+    <rect x="8"   y="68"  width="54" height="92"/>
+    <rect x="24"  y="48"  width="18" height="112"/>
+    <rect x="26"  y="40"  width="14" height="8"/>
+    <rect x="75"  y="52"  width="48" height="108"/>
+    <rect x="86"  y="38"  width="26" height="14"/>
+    <rect x="135" y="70"  width="62" height="90"/>
+    <rect x="145" y="55"  width="42" height="15"/>
+    <rect x="208" y="42"  width="36" height="118"/>
+    <rect x="212" y="32"  width="12" height="10"/>
+    <rect x="255" y="62"  width="72" height="98"/>
+    <rect x="268" y="50"  width="46" height="12"/>
+    <rect x="337" y="35"  width="26" height="125"/>
+    <rect x="340" y="24"  width="4"  height="11"/>
+    <rect x="373" y="58"  width="58" height="102"/>
+    <rect x="380" y="46"  width="44" height="12"/>
+    <rect x="440" y="72"  width="66" height="88"/>
+    <rect x="450" y="60"  width="46" height="12"/>
+    <rect x="515" y="40"  width="32" height="120"/>
+    <rect x="518" y="30"  width="26" height="10"/>
+    <rect x="557" y="65"  width="52" height="95"/>
+    <rect x="564" y="53"  width="38" height="12"/>
+    <rect x="618" y="47"  width="42" height="113"/>
+    <rect x="622" y="35"  width="34" height="12"/>
+    <rect x="668" y="75"  width="62" height="85"/>
+    <rect x="678" y="63"  width="42" height="12"/>
+    <rect x="738" y="52"  width="38" height="108"/>
+    <rect x="742" y="42"  width="30" height="10"/>
+    <rect x="776" y="70"  width="24" height="90"/>
+  </g>
+  <g fill="rgba(255,220,120,0.18)">
+    <rect x="14"  y="74" width="5" height="4"/><rect x="22"  y="74" width="5" height="4"/>
+    <rect x="14"  y="82" width="5" height="4"/><rect x="22"  y="82" width="5" height="4"/>
+    <rect x="82"  y="58" width="5" height="4"/><rect x="92"  y="58" width="5" height="4"/>
+    <rect x="82"  y="67" width="5" height="4"/><rect x="92"  y="67" width="5" height="4"/>
+    <rect x="213" y="48" width="5" height="4"/><rect x="222" y="48" width="5" height="4"/>
+    <rect x="213" y="57" width="5" height="4"/><rect x="222" y="57" width="5" height="4"/>
+    <rect x="341" y="42" width="5" height="4"/><rect x="350" y="42" width="5" height="4"/>
+    <rect x="341" y="52" width="5" height="4"/><rect x="350" y="52" width="5" height="4"/>
+    <rect x="519" y="46" width="5" height="4"/><rect x="528" y="46" width="5" height="4"/>
+    <rect x="519" y="56" width="5" height="4"/><rect x="528" y="56" width="5" height="4"/>
+    <rect x="623" y="52" width="5" height="4"/><rect x="632" y="52" width="5" height="4"/>
+    <rect x="623" y="62" width="5" height="4"/><rect x="632" y="62" width="5" height="4"/>
+  </g>
+</svg>
+
+<!-- ══════════════════════════════════
+     HOME
+     ══════════════════════════════════ -->
+<div id="screen-home" class="screen active">
+  <div class="logo">Code<span>names</span></div>
+  <p class="tagline">Multiplayer · Русская версия</p>
+  <div class="panel" style="max-width:400px">
+    <div class="form-col">
+      <div>
+        <label>Ваше имя</label>
+        <input id="name-input" type="text" placeholder="Введите имя" maxlength="20" autocomplete="off"/>
+      </div>
+
+      <div id="url-join-section" style="display:none">
+        <label>Код комнаты</label>
+        <input id="room-url-input" type="text" maxlength="6"
+               style="text-transform:uppercase;letter-spacing:.2em;font-weight:700;font-size:1.1rem;text-align:center"
+               autocomplete="off" readonly/>
+        <button class="btn-gold" style="width:100%;margin-top:10px" onclick="doJoinUrl()">▶ Войти в комнату</button>
+      </div>
+
+      <div id="create-section">
+        <button class="btn-green" style="width:100%" onclick="doCreate()">✦ Создать комнату</button>
+      </div>
+
+      <div class="divider"><hr><span>Или войти по коду</span><hr></div>
+
+      <div>
+        <label>Код комнаты</label>
+        <div class="row">
+          <input id="room-manual-input" type="text" placeholder="XXXXXX" maxlength="6"
+                 style="text-transform:uppercase;letter-spacing:.14em;font-weight:700" autocomplete="off"/>
+          <button class="btn-dark" style="white-space:nowrap;padding:13px 18px" onclick="doJoinManual()">Войти</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     LOBBY
+     ══════════════════════════════════ -->
+<div id="screen-lobby" class="screen">
+  <div class="logo" style="margin-bottom:2px">Code<span>names</span></div>
+  <p class="tagline">Ожидание игроков</p>
+
+  <div style="width:100%;max-width:480px;display:flex;flex-direction:column;align-items:center">
+    <div class="lobby-code-block">
+      <div class="lobby-code-label">Код комнаты</div>
+      <div class="lobby-code" id="lobby-code">------</div>
+    </div>
+
+    <div class="invite-row">
+      <div class="invite-url" id="invite-url" onclick="copyLink()">—</div>
+      <button class="btn-copy" id="btn-copy" onclick="copyLink()">Копировать</button>
+    </div>
+
+    <div class="panel" style="width:100%;padding:14px 16px;margin-bottom:12px">
+      <div class="lobby-note">Команды назначаются случайно при старте игры</div>
+      <div class="players-lobby-list" id="lobby-players"></div>
+    </div>
+
+    <div class="lobby-status" id="lobby-status">Ожидаем игроков…</div>
+    <button class="btn-gold" style="width:100%;display:none" id="btn-start" onclick="socket.emit('start')">
+      ▶ Начать игру
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     GAME
+     ══════════════════════════════════ -->
+<div id="screen-game" class="screen">
+  <div id="turn-banner" class="red">
+    <div class="bn-label" id="bn-label">Ход команды</div>
+    <div class="bn-team"  id="bn-team">КРАСНЫХ</div>
+    <div class="bn-action" id="bn-action">Дождитесь своей очереди</div>
+  </div>
+
+  <div id="scorebar">
+    <div class="sc red active" id="sc-red">🔴 КРАСНЫЕ &nbsp;<b id="cnt-red">9</b></div>
+    <div class="sc blue"       id="sc-blue">🔵 СИНИЕ &nbsp;<b id="cnt-blue">8</b></div>
+  </div>
+
+  <div id="game-players"></div>
+
+  <div id="board-wrap"><div id="grid"></div></div>
+
+  <div id="game-controls">
+    <button class="btn-dark" id="btn-end-turn" style="display:none" onclick="socket.emit('end_turn')">⏭ Передать ход</button>
+    <button class="btn-dark" id="btn-restart"  style="display:none" onclick="socket.emit('restart')">🔄</button>
+  </div>
+</div>
+
+<!-- Role reveal dossier -->
+<div id="role-reveal">
+  <div class="dossier">
+    <div class="dossier-stamp">Секретно</div>
+    <div class="dossier-label">Досье агента</div>
+    <div class="dossier-team" id="dossier-team">КРАСНЫЕ</div>
+    <div class="dossier-role" id="dossier-role">КАПИТАН</div>
+    <div class="dossier-desc" id="dossier-desc">Вы видите цвета всех карт. Давайте подсказки вслух — одно слово и количество.</div>
+    <button class="dossier-btn" onclick="closeDossier()">Принято. Начать операцию.</button>
+  </div>
+</div>
+
+<!-- Win -->
+<div id="win-overlay">
+  <div class="win-icon" id="win-icon">🏆</div>
+  <div class="win-title" id="win-title">ПОБЕДА</div>
+  <div class="win-reason" id="win-reason"></div>
+  <div class="win-btns">
+    <button class="btn-gold" id="btn-win-restart" style="display:none" onclick="socket.emit('restart')">🔄 Сыграть снова</button>
+    <button class="btn-dark" onclick="document.getElementById('win-overlay').classList.remove('show')">Посмотреть доску</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// ══════════════════════════════════════════════════════
+//  CHARACTER PORTRAITS  (SVG strings)
+// ══════════════════════════════════════════════════════
+const PORTRAITS = {
+  // SPY A — male with fedora
+  spyA: `<svg viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="106" rx="26" ry="4" fill="rgba(0,0,0,0.35)"/>
+    <path d="M10,110 Q14,76 28,66 L40,82 L52,66 Q66,76 70,110Z" fill="rgba(0,0,0,0.55)"/>
+    <path d="M35,66 L40,73 L45,66 L43,82 L40,90 L37,82Z" fill="rgba(255,255,255,0.18)"/>
+    <rect x="36" y="55" width="8" height="13" rx="3.5" fill="rgba(205,165,110,0.95)"/>
+    <ellipse cx="40" cy="44" rx="15" ry="18" fill="rgba(210,168,112,0.97)"/>
+    <path d="M25,39 Q25,35 40,33 Q55,35 55,39" fill="rgba(25,15,8,0.88)"/>
+    <ellipse cx="40" cy="30" rx="21" ry="4.5" fill="rgba(22,14,6,0.92)"/>
+    <path d="M22,30 Q22,8 40,8 Q58,8 58,30Z" fill="rgba(18,10,4,0.94)"/>
+    <rect x="22" y="24" width="36" height="5" rx="0" fill="rgba(50,32,12,0.88)"/>
+    <ellipse cx="35" cy="44" rx="4" ry="3" fill="white"/>
+    <ellipse cx="45" cy="44" rx="4" ry="3" fill="white"/>
+    <circle cx="36" cy="44" r="2.5" fill="#0d0d0d"/>
+    <circle cx="46" cy="44" r="2.5" fill="#0d0d0d"/>
+    <circle cx="36.8" cy="43.2" r=".9" fill="white"/>
+    <circle cx="46.8" cy="43.2" r=".9" fill="white"/>
+    <path d="M38,51 Q40,54 42,51" stroke="rgba(155,98,55,0.7)" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <path d="M35,57 Q40,59 45,57" stroke="rgba(140,70,60,0.75)" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+  </svg>`,
+
+  // SPY B — female with sunglasses
+  spyB: `<svg viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="106" rx="26" ry="4" fill="rgba(0,0,0,0.35)"/>
+    <path d="M10,110 Q14,78 28,68 L40,84 L52,68 Q66,78 70,110Z" fill="rgba(0,0,0,0.5)"/>
+    <rect x="31" y="60" width="18" height="16" rx="2" fill="rgba(0,0,0,0.55)"/>
+    <rect x="36" y="54" width="8" height="12" rx="3.5" fill="rgba(205,162,108,0.95)"/>
+    <ellipse cx="40" cy="42" rx="14" ry="17" fill="rgba(212,168,112,0.97)"/>
+    <path d="M26,36 Q26,18 40,16 Q54,18 54,36 Q50,26 40,24 Q30,26 26,36Z" fill="rgba(22,12,5,0.92)"/>
+    <rect x="26" y="38" width="11" height="7" rx="3.5" fill="rgba(8,8,12,0.95)"/>
+    <rect x="43" y="38" width="11" height="7" rx="3.5" fill="rgba(8,8,12,0.95)"/>
+    <rect x="37" y="41" width="6" height="1.5" rx=".75" fill="rgba(20,20,28,0.88)"/>
+    <line x1="26" y1="41.5" x2="22" y2="39.5" stroke="rgba(20,20,28,0.85)" stroke-width="1.3"/>
+    <line x1="54" y1="41.5" x2="58" y2="39.5" stroke="rgba(20,20,28,0.85)" stroke-width="1.3"/>
+    <path d="M38,51 Q40,54 42,51" stroke="rgba(155,98,55,0.6)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    <path d="M35,57 Q40,59 45,57" stroke="rgba(175,75,80,0.7)" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+  </svg>`,
+
+  // SPY C — male agent, no hat
+  spyC: `<svg viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="106" rx="26" ry="4" fill="rgba(0,0,0,0.35)"/>
+    <path d="M10,110 Q14,76 27,66 L40,80 L53,66 Q66,76 70,110Z" fill="rgba(0,0,0,0.52)"/>
+    <path d="M34,66 L40,72 L46,66 L44,80 L40,88 L36,80Z" fill="rgba(255,255,255,0.15)"/>
+    <rect x="36" y="55" width="8" height="13" rx="3.5" fill="rgba(200,162,108,0.95)"/>
+    <ellipse cx="40" cy="43" rx="15" ry="18" fill="rgba(210,168,112,0.97)"/>
+    <path d="M26,32 Q27,18 40,16 Q53,18 54,32 Q50,22 40,21 Q30,22 26,32Z" fill="rgba(35,22,10,0.9)"/>
+    <ellipse cx="27" cy="43" rx="3" ry="4" fill="rgba(200,160,108,0.9)"/>
+    <ellipse cx="53" cy="43" rx="3" ry="4" fill="rgba(200,160,108,0.9)"/>
+    <ellipse cx="35" cy="43" rx="4" ry="3" fill="white"/>
+    <ellipse cx="45" cy="43" rx="4" ry="3" fill="white"/>
+    <circle cx="36" cy="43" r="2.5" fill="#0a0a0a"/>
+    <circle cx="46" cy="43" r="2.5" fill="#0a0a0a"/>
+    <circle cx="36.8" cy="42.2" r=".9" fill="white"/>
+    <circle cx="46.8" cy="42.2" r=".9" fill="white"/>
+    <path d="M38,50 Q40,53 42,50" stroke="rgba(150,95,52,0.65)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    <path d="M35,56 Q40,58 45,56" stroke="rgba(130,65,55,0.72)" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <path d="M36,32 Q37,28 40,27 Q43,28 44,32" stroke="rgba(35,22,10,0.5)" stroke-width=".8" fill="none"/>
+  </svg>`,
+
+  // NEUTRAL A — civilian man
+  neutralA: `<svg viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="106" rx="26" ry="4" fill="rgba(0,0,0,0.28)"/>
+    <path d="M10,110 Q14,78 29,70 L40,84 L51,70 Q66,78 70,110Z" fill="rgba(0,0,0,0.38)"/>
+    <path d="M34,70 L40,76 L46,70" stroke="rgba(200,175,140,0.55)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <rect x="36" y="56" width="8" height="16" rx="3.5" fill="rgba(208,170,115,0.95)"/>
+    <ellipse cx="40" cy="44" rx="15" ry="18" fill="rgba(215,175,118,0.97)"/>
+    <path d="M25,36 Q26,20 40,18 Q54,20 55,36 Q50,26 40,25 Q30,26 25,36Z" fill="rgba(80,48,18,0.88)"/>
+    <ellipse cx="27" cy="43" rx="3" ry="4" fill="rgba(210,170,115,0.9)"/>
+    <ellipse cx="53" cy="43" rx="3" ry="4" fill="rgba(210,170,115,0.9)"/>
+    <ellipse cx="35" cy="43" rx="4" ry="3" fill="white"/>
+    <ellipse cx="45" cy="43" rx="4" ry="3" fill="white"/>
+    <circle cx="36" cy="43" r="2.5" fill="#2a1805"/>
+    <circle cx="46" cy="43" r="2.5" fill="#2a1805"/>
+    <circle cx="36.8" cy="42.2" r=".9" fill="white"/>
+    <circle cx="46.8" cy="42.2" r=".9" fill="white"/>
+    <path d="M38,50 Q40,53 42,50" stroke="rgba(155,100,55,0.6)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    <path d="M35,57 Q40,61 45,57" stroke="rgba(155,82,62,0.7)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  </svg>`,
+
+  // NEUTRAL B — civilian woman
+  neutralB: `<svg viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="106" rx="26" ry="4" fill="rgba(0,0,0,0.28)"/>
+    <path d="M8,110 Q13,78 27,68 L40,84 L53,68 Q67,78 72,110Z" fill="rgba(0,0,0,0.36)"/>
+    <rect x="36" y="57" width="8" height="14" rx="3.5" fill="rgba(212,174,118,0.95)"/>
+    <ellipse cx="40" cy="44" rx="14" ry="17" fill="rgba(218,178,122,0.97)"/>
+    <path d="M26,36 Q25,55 26,76 Q30,64 30,56" fill="rgba(48,28,8,0.88)"/>
+    <path d="M54,36 Q55,55 54,76 Q50,64 50,56" fill="rgba(48,28,8,0.88)"/>
+    <path d="M26,36 Q27,18 40,16 Q53,18 54,36 Q48,24 40,23 Q32,24 26,36Z" fill="rgba(48,28,8,0.88)"/>
+    <ellipse cx="35" cy="42" rx="4.5" ry="3.2" fill="white"/>
+    <ellipse cx="45" cy="42" rx="4.5" ry="3.2" fill="white"/>
+    <circle cx="36.2" cy="42" r="2.8" fill="#2a1805"/>
+    <circle cx="46.2" cy="42" r="2.8" fill="#2a1805"/>
+    <circle cx="37.2" cy="41.1" r="1" fill="white"/>
+    <circle cx="47.2" cy="41.1" r="1" fill="white"/>
+    <path d="M31,39.5 Q35,36 39,39.5" stroke="#1a1005" stroke-width=".9" fill="none"/>
+    <path d="M41,39.5 Q45,36 49,39.5" stroke="#1a1005" stroke-width=".9" fill="none"/>
+    <path d="M38,50 Q40,53 42,50" stroke="rgba(150,95,52,0.55)" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+    <path d="M35,56 Q40,60 45,56" stroke="rgba(175,72,82,0.7)" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  </svg>`,
+
+  // ASSASSIN — hooded figure
+  assassin: `<svg viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="106" rx="26" ry="4" fill="rgba(0,0,0,0.55)"/>
+    <path d="M5,110 Q10,70 22,60 L40,82 L58,60 Q70,70 75,110Z" fill="rgba(0,0,0,0.75)"/>
+    <path d="M18,52 Q18,14 40,12 Q62,14 62,52 Q55,40 40,38 Q25,40 18,52Z" fill="rgba(8,8,10,0.95)"/>
+    <path d="M22,52 Q22,20 40,18 Q58,20 58,52 Q52,42 40,40 Q28,42 22,52Z" fill="rgba(14,12,16,0.97)"/>
+    <ellipse cx="40" cy="52" rx="13" ry="15" fill="rgba(28,22,20,0.85)"/>
+    <ellipse cx="35" cy="50" rx="4" ry="3" fill="rgba(170,25,25,0.88)"/>
+    <ellipse cx="45" cy="50" rx="4" ry="3" fill="rgba(170,25,25,0.88)"/>
+    <circle cx="35" cy="50" r="2" fill="rgba(240,90,70,0.95)"/>
+    <circle cx="45" cy="50" r="2" fill="rgba(240,90,70,0.95)"/>
+    <ellipse cx="35" cy="50" rx="6" ry="4.5" fill="rgba(180,25,25,0.1)"/>
+    <ellipse cx="45" cy="50" rx="6" ry="4.5" fill="rgba(180,25,25,0.1)"/>
+    <path d="M29,57 Q40,59 51,57" stroke="rgba(12,10,14,0.9)" stroke-width="5" fill="none" stroke-linecap="round"/>
+  </svg>`
+};
+
+// Pick portrait based on card type and figure index
+function getPortrait(type, fig) {
+  if (type === 'assassin') return PORTRAITS.assassin;
+  if (type === 'neutral')  return [PORTRAITS.neutralA, PORTRAITS.neutralB][fig % 2];
+  return [PORTRAITS.spyA, PORTRAITS.spyB, PORTRAITS.spyC, PORTRAITS.spyA][fig % 3];
+}
+
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+const socket = io();
+let myTeam = null, myRole = null, isHost = false, myName = null, myRoomId = null;
+let prevRevealed = [];     // track which cards were previously revealed
+let dossierDone  = false;  // has the role dossier been shown this game
+
+const urlRoom = new URLSearchParams(location.search).get('room');
+if (urlRoom) {
+  document.getElementById('room-url-input').value = urlRoom.toUpperCase();
+  document.getElementById('url-join-section').style.display = 'block';
+  document.getElementById('create-section').style.display   = 'none';
+}
+
+// ══════════════════════════════════════════════════════
+//  SCREENS
+// ══════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ══════════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════════
+let toastT;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function getName() {
+  const n = document.getElementById('name-input').value.trim();
+  if (!n) { showToast('Введите ваше имя'); return null; }
+  return n;
+}
+
+function copyLink() {
+  navigator.clipboard.writeText(document.getElementById('invite-url').textContent).then(() => {
+    const b = document.getElementById('btn-copy');
+    b.textContent = '✓ Скопировано';
+    setTimeout(() => b.textContent = 'Копировать', 2000);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  ACTIONS
+// ══════════════════════════════════════════════════════
+function doCreate() {
+  const name = getName(); if (!name) return;
+  myName = name; socket.emit('create', { name });
+}
+function doJoinUrl() {
+  const name = getName(); if (!name) return;
+  myName = name; socket.emit('join', { roomId: urlRoom.toUpperCase(), name });
+}
+function doJoinManual() {
+  const name = getName(); if (!name) return;
+  const rid = document.getElementById('room-manual-input').value.trim().toUpperCase();
+  if (!rid) { showToast('Введите код комнаты'); return; }
+  myName = name; socket.emit('join', { roomId: rid, name });
+}
+
+// ══════════════════════════════════════════════════════
+//  DOSSIER (role reveal)
+// ══════════════════════════════════════════════════════
+function showDossier(team, role) {
+  const el = document.getElementById('role-reveal');
+  document.getElementById('dossier-team').textContent = team === 'red' ? 'КРАСНЫЕ' : 'СИНИЕ';
+  document.getElementById('dossier-team').className   = 'dossier-team ' + team;
+  document.getElementById('dossier-role').textContent = role === 'captain' ? 'КАПИТАН' : 'АГЕНТ';
+  document.getElementById('dossier-desc').textContent = role === 'captain'
+    ? 'Вы видите цвета всех карт. Давайте подсказки вслух — одно слово вслух команде.'
+    : 'Слушайте подсказки своего капитана и нажимайте на карточки для открытия.';
+  el.classList.add('show');
+}
+function closeDossier() {
+  document.getElementById('role-reveal').classList.remove('show');
+  dossierDone = true;
+}
+
+// ══════════════════════════════════════════════════════
+//  SOCKET EVENTS
+// ══════════════════════════════════════════════════════
+socket.on('joined', ({ roomId, isHost: h }) => {
+  isHost = h; myRoomId = roomId;
+  showScreen('lobby');
+  document.getElementById('lobby-code').textContent = roomId;
+  document.getElementById('invite-url').textContent = `${location.origin}/?room=${roomId}`;
+});
+
+socket.on('lobby', ({ players, hostName }) => {
+  const el = document.getElementById('lobby-players');
+  el.innerHTML = '';
+  if (!players.length) {
+    el.innerHTML = `<div style="color:rgba(255,255,255,.25);font-size:.82rem;padding:6px 0">Нет игроков</div>`;
+  } else {
+    players.forEach(p => {
+      const d = document.createElement('div');
+      d.className = 'lobby-player-row';
+      d.innerHTML = `<div class="lobby-dot"></div><span>${esc(p.name)}</span>${p.name===myName?'<span class="you-tag">(вы)</span>':''}`;
+      el.appendChild(d);
+    });
+  }
+  document.getElementById('lobby-status').textContent = isHost
+    ? `Игроков: ${players.length}. Нажмите «Начать», когда все готовы.`
+    : `Игроков: ${players.length}. Ждём начала от ${esc(hostName)}…`;
+  document.getElementById('btn-start').style.display = isHost ? 'block' : 'none';
+});
+
+socket.on('game_started', () => {
+  dossierDone = false;
+  prevRevealed = [];
+  showScreen('game');
+  document.getElementById('win-overlay').classList.remove('show');
+});
+
+socket.on('state', data => {
+  myTeam = data.myTeam;
+  myRole = data.myRole;
+  // Show dossier once per game on first state
+  if (!dossierDone && myTeam && myRole) {
+    showDossier(myTeam, myRole);
+  }
+  renderGame(data);
+});
+
+socket.on('err', showToast);
+
+// ══════════════════════════════════════════════════════
+//  GAME RENDERING
+// ══════════════════════════════════════════════════════
+function renderGame(data) {
+  const { cards, currentTeam, redLeft, blueLeft, winner, winReason, players } = data;
+  const isMyTurn = currentTeam === myTeam;
+
+  // Banner
+  const banner = document.getElementById('turn-banner');
+  banner.className = currentTeam + (isMyTurn ? ' mine' : '');
+  document.getElementById('bn-label').textContent = isMyTurn ? 'ВАШ ХОД' : 'ХОД КОМАНДЫ';
+  document.getElementById('bn-team').textContent  = currentTeam === 'red' ? 'КРАСНЫХ' : 'СИНИХ';
+  if (winner) {
+    banner.className = winner + ' mine';
+    document.getElementById('bn-label').textContent = '';
+    document.getElementById('bn-team').textContent  = winner === 'red' ? 'КРАСНЫЕ ПОБЕДИЛИ' : 'СИНИЕ ПОБЕДИЛИ';
+    document.getElementById('bn-action').textContent = '';
+  } else {
+    document.getElementById('bn-action').textContent = isMyTurn
+      ? (myRole === 'captain' ? 'Вы капитан — назовите слово вслух' : 'Нажмите на карточку')
+      : 'Дождитесь своей очереди';
+  }
+
+  // Scores
+  document.getElementById('cnt-red').textContent  = redLeft;
+  document.getElementById('cnt-blue').textContent = blueLeft;
+  document.getElementById('sc-red').classList.toggle('active',  currentTeam === 'red');
+  document.getElementById('sc-blue').classList.toggle('active', currentTeam === 'blue');
+
+  // Cards
+  const canClick = !winner && isMyTurn && myRole === 'operative';
+  renderCards(cards, canClick);
+
+  // Controls
+  document.getElementById('btn-end-turn').style.display = (!winner && isMyTurn) ? 'flex' : 'none';
+  document.getElementById('btn-restart').style.display  = isHost ? 'flex' : 'none';
+
+  // Players
+  const pw = document.getElementById('game-players');
+  pw.innerHTML = '';
+  players.forEach(p => {
+    const c = document.createElement('div');
+    c.className = `gp ${p.team||''}${!p.online?' off':''}${p.name===myName?' me':''}`;
+    c.innerHTML = `<div class="dot"></div>${p.role==='captain'?'<span class="star">★</span>':''}<span>${esc(p.name)}</span>`;
+    pw.appendChild(c);
+  });
+
+  // Win
+  if (winner) {
+    document.getElementById('win-title').textContent = winner === 'red' ? 'КРАСНЫЕ ПОБЕДИЛИ' : 'СИНИЕ ПОБЕДИЛИ';
+    document.getElementById('win-title').className   = 'win-title ' + winner;
+    document.getElementById('win-icon').textContent  = winner === 'red' ? '🔴' : '🔵';
+    document.getElementById('win-reason').textContent = winReason;
+    document.getElementById('btn-win-restart').style.display = isHost ? 'inline-block' : 'none';
+    setTimeout(() => {
+      document.getElementById('win-overlay').classList.add('show');
+      launchConfetti(winner);
+    }, 800);
+  }
+}
+
+// ── Card rendering with flip animation ────────────────────────────────────────
+function renderCards(cards, canClick) {
+  const grid = document.getElementById('grid');
+  const isNewGame = grid.children.length !== cards.length;
+
+  // Build card elements if needed
+  if (isNewGame) {
+    grid.innerHTML = '';
+    prevRevealed = new Array(cards.length).fill(false);
+    cards.forEach((_, i) => {
+      const el = document.createElement('div');
+      el.className = 'card dealing';
+      el.style.animationDelay = `${i * 32}ms`;
+      el.innerHTML = `<div class="card-inner"><div class="card-front"></div><div class="card-back"></div></div>`;
+      grid.appendChild(el);
+    });
+  }
+
+  cards.forEach((card, i) => {
+    const el    = grid.children[i];
+    const front = el.querySelector('.card-front');
+    const back  = el.querySelector('.card-back');
+    const wasRevealed = prevRevealed[i];
+    const nowRevealed = card.revealed;
+
+    // Remove hint classes
+    el.classList.remove('hint-red','hint-blue','hint-neutral','hint-assassin','clickable');
+
+    // Front face content
+    front.innerHTML = `<span class="front-word">${esc(card.word)}</span>`;
+
+    // Apply captain tint to front
+    if (!nowRevealed && myRole === 'captain' && card.type !== 'unknown') {
+      el.classList.add('hint-' + card.type);
+    }
+
+    // Back face content (revealed)
+    if (nowRevealed) {
+      back.innerHTML = `
+        <div class="back-portrait">${getPortrait(card.type, card.fig)}</div>
+        <span class="back-word">${esc(card.word)}</span>`;
+      el.classList.remove('revealed-red','revealed-blue','revealed-neutral','revealed-assassin');
+      el.classList.add('revealed-' + card.type);
+    }
+
+    // Trigger flip animation for newly revealed cards
+    if (nowRevealed && !wasRevealed) {
+      el.classList.remove('flipped');
+      // Force reflow then flip
+      void el.offsetWidth;
+      el.classList.add('flipped');
+    } else if (nowRevealed) {
+      el.classList.add('flipped');
+    } else {
+      el.classList.remove('flipped');
+    }
+
+    // Clickable
+    if (canClick && !nowRevealed) {
+      el.classList.add('clickable');
+      el.onclick = () => socket.emit('reveal', { index: i });
+    } else {
+      el.onclick = null;
+    }
+  });
+
+  prevRevealed = cards.map(c => c.revealed);
+}
+
+// ── Confetti ───────────────────────────────────────────────────────────────────
+function launchConfetti(winner) {
+  const colors = winner === 'red'
+    ? ['#e74c3c','#c0392b','#f39c12','#e67e22','#fff']
+    : ['#3498db','#2980b9','#1abc9c','#f39c12','#fff'];
+  for (let i = 0; i < 70; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.cssText = `left:${Math.random()*100}vw;background:${colors[i%colors.length]};
+      border-radius:${Math.random()>.5?'50%':'2px'};
+      width:${6+Math.random()*7}px;height:${6+Math.random()*7}px;
+      animation-delay:${Math.random()*.6}s;
+      animation-duration:${.9+Math.random()*1.2}s`;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 2500);
+  }
+}
+
+// ── Keyboard ───────────────────────────────────────────────────────────────────
+document.getElementById('name-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') urlRoom ? doJoinUrl() : doCreate();
+});
+document.getElementById('room-manual-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doJoinManual();
+});
+</script>
+</body>
+</html>
