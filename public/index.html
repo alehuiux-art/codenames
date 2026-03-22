@@ -600,16 +600,26 @@
   }
 
   /* Button */
+  .wb-btns {
+    margin-top: 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    position: relative; z-index: 3; width: 100%;
+  }
   .wb-btn {
-    margin-top: 24px; width: 200px;
+    width: 220px;
     background: transparent;
     border: 2px solid rgba(255,255,255,.45);
     color: var(--white); border-radius: 50px;
-    font-size: 15px; font-weight: 800; padding: 14px 24px; letter-spacing: .08em;
-    transition: background .15s;
-    position: relative; z-index: 3;
+    font-size: 15px; font-weight: 800; padding: 13px 24px; letter-spacing: .06em;
+    transition: background .15s; font-family: inherit; cursor: pointer;
+    text-transform: uppercase;
   }
   .wb-btn:active { background: rgba(255,255,255,.15); transform: scale(.97); }
+  .wb-btn-primary {
+    background: rgba(255,255,255,.18);
+    border-color: rgba(255,255,255,.65);
+    font-size: 16px;
+  }
 
   /* ── Fireworks ── */
   .fw-shell {
@@ -813,7 +823,10 @@
     <img class="wb-char" id="wb-char" src="" alt="">
     <div class="wb-ribbon" id="wb-ribbon">ПОБЕДА</div>
     <div class="wb-subtitle" id="wb-subtitle"></div>
-    <button class="btn wb-btn" id="btn-win-restart" style="display:none" onclick="socket.emit('restart')">НОВАЯ ИГРА</button>
+    <div class="wb-btns" id="wb-btns" style="display:none">
+      <button class="wb-btn wb-btn-primary" onclick="socket.emit('restart')">Новая игра</button>
+      <button class="wb-btn" onclick="socket.emit('shuffle')">Перемешать команды</button>
+    </div>
   </div>
 </div>
 
@@ -1218,7 +1231,7 @@ function showWin(winner, reason) {
     }
   }
 
-  document.getElementById('btn-win-restart').style.display = isHost ? '' : 'none';
+  document.getElementById('wb-btns').style.display = isHost ? 'flex' : 'none';
 }
 
 function launchConfetti() {

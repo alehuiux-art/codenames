@@ -64,6 +64,15 @@ function assignTeamsAndRoles(players) {
   if (blues.length) blues[ Math.floor(Math.random() * blues.length)].role = 'captain';
 }
 
+// Keep teams, pick new captains only
+function rotateCaptains(players) {
+  players.forEach(p => { p.role = 'operative'; });
+  const reds  = players.filter(p => p.team === 'red');
+  const blues = players.filter(p => p.team === 'blue');
+  if (reds.length)  reds[  Math.floor(Math.random() * reds.length)].role  = 'captain';
+  if (blues.length) blues[ Math.floor(Math.random() * blues.length)].role = 'captain';
+}
+
 function initGame(numPlayers) {
   const first = Math.random() < 0.5 ? 'red' : 'blue';
   const words = shuffle([...new Set(WORDS)]).slice(0, 25);
@@ -234,12 +243,24 @@ io.on('connection', sock => {
     pushState(room);
   });
 
+  // New game — same teams, new random captains
   sock.on('restart', () => {
     const { roomId } = sock.data || {};
     if (!roomId) return;
     const room = rooms.get(roomId);
     if (!room || room.host !== sock.id) return;
-    // Re-assign teams randomly again
+    rotateCaptains(room.players);
+    room.gameState = initGame(room.players.length);
+    io.to(roomId).emit('game_started');
+    pushState(room);
+  });
+
+  // Shuffle teams — full random reassignment
+  sock.on('shuffle', () => {
+    const { roomId } = sock.data || {};
+    if (!roomId) return;
+    const room = rooms.get(roomId);
+    if (!room || room.host !== sock.id) return;
     assignTeamsAndRoles(room.players);
     room.gameState = initGame(room.players.length);
     io.to(roomId).emit('game_started');
