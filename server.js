@@ -178,7 +178,7 @@ io.on('connection', sock => {
     if (!roomId) return;
     const room = rooms.get(roomId);
     if (!room || room.host !== sock.id || room.started) return;
-    if (room.players.length < 2) { sock.emit('err', 'Нужен минимум 2 игрока'); return; }
+    if (room.players.length < 4) { sock.emit('err', 'Нужен минимум 4 игрока'); return; }
 
     // Randomly assign teams and captains NOW
     assignTeamsAndRoles(room.players);
