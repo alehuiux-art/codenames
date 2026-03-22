@@ -900,7 +900,7 @@ socket.on('game_started', () => {
   dossierDone = false;
   prevRevealed = [];
   document.getElementById('win-banner').className = '';
-  document.getElementById('btn-new-game').style.display = isHost ? '' : 'none';
+  document.getElementById('btn-new-game').style.display = isHost ? 'block' : 'none';
   showScreen('game');
   const grid = document.getElementById('game-grid');
   grid.innerHTML = '';
