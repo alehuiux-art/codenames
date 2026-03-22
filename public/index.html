@@ -311,14 +311,45 @@
   }
   .card-back { transform: rotateY(180deg); }
 
+  /* iOS Safari fallback: explicitly hide non-visible face */
+  .card:not(.flipped) .card-back  { visibility: hidden; }
+  .card.flipped       .card-front { visibility: hidden; }
+
   /* Front: default card image */
   .card-front { background-image: url(/img/card-default.png); background-color: #e8e0d0; }
 
   /* Captain color hints on front */
-  .card.hint-red    .card-front { background-image: url(/img/card-red1.png); }
-  .card.hint-blue   .card-front { background-image: url(/img/card-blue1.png); }
+  .card.hint-red     .card-front { background-image: url(/img/card-red1.png); }
+  .card.hint-blue    .card-front { background-image: url(/img/card-blue1.png); }
   .card.hint-neutral .card-front { background-image: url(/img/card-neutral.png); }
   .card.hint-assassin .card-front { background-image: url(/img/card-death.png); }
+
+  /* Captain hint: colored border + dot badge */
+  .card.hint-red,
+  .card.hint-blue,
+  .card.hint-neutral,
+  .card.hint-assassin { position: relative; }
+
+  .card.hint-red     { box-shadow: 0 0 0 3px var(--red),   0 2px 8px rgba(251,41,40,.4); }
+  .card.hint-blue    { box-shadow: 0 0 0 3px var(--blue),  0 2px 8px rgba(54,43,229,.4); }
+  .card.hint-neutral { box-shadow: 0 0 0 3px #888,         0 2px 6px rgba(0,0,0,.3); }
+  .card.hint-assassin{ box-shadow: 0 0 0 3px #111,         0 2px 8px rgba(0,0,0,.6); }
+
+  /* Small color dot in top-left corner for captain */
+  .card.hint-red::after,
+  .card.hint-blue::after,
+  .card.hint-neutral::after,
+  .card.hint-assassin::after {
+    content: '';
+    position: absolute; top: 5px; left: 5px;
+    width: 10px; height: 10px; border-radius: 50%;
+    z-index: 20; pointer-events: none;
+    border: 1.5px solid rgba(255,255,255,.6);
+  }
+  .card.hint-red::after     { background: var(--red); }
+  .card.hint-blue::after    { background: var(--blue); }
+  .card.hint-neutral::after { background: #888; }
+  .card.hint-assassin::after{ background: #111; }
 
   /* Back: revealed card by type */
   .card.revealed-red1     .card-back { background-image: url(/img/card-red1.png); }
