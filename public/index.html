@@ -384,13 +384,13 @@
   .card.flipped       .card-front { visibility: hidden; }
 
   /* Front: default card image */
-  .card-front { background-image: url(/img/card-default.png); background-color: #e8e0d0; }
+  .card-front { background-image: url(/img/card-default.webp); background-color: #e8e0d0; }
 
   /* Captain color hints on front */
-  .card.hint-red      .card-front { background-image: url(/img/card-red.png); }
-  .card.hint-blue     .card-front { background-image: url(/img/card-blue.png); }
-  .card.hint-neutral  .card-front { background-image: url(/img/card-neutral.png); }
-  .card.hint-assassin .card-front { background-image: url(/img/card-death.png); }
+  .card.hint-red      .card-front { background-image: url(/img/card-red.webp); }
+  .card.hint-blue     .card-front { background-image: url(/img/card-blue.webp); }
+  .card.hint-neutral  .card-front { background-image: url(/img/card-neutral.webp); }
+  .card.hint-assassin .card-front { background-image: url(/img/card-death.webp); }
 
   /* Captain view: dark overlay on revealed card image, text stays fully opaque */
   .is-captain .card.flipped .card-back::before {
@@ -417,10 +417,10 @@
   }
 
   /* Back: revealed card by type */
-  .card.revealed-red      .card-back { background-image: url(/img/card-red.png); }
-  .card.revealed-blue     .card-back { background-image: url(/img/card-blue.png); }
-  .card.revealed-neutral  .card-back { background-image: url(/img/card-neutral.png); }
-  .card.revealed-assassin .card-back { background-image: url(/img/card-death.png); }
+  .card.revealed-red      .card-back { background-image: url(/img/card-red.webp); }
+  .card.revealed-blue     .card-back { background-image: url(/img/card-blue.webp); }
+  .card.revealed-neutral  .card-back { background-image: url(/img/card-neutral.webp); }
+  .card.revealed-assassin .card-back { background-image: url(/img/card-death.webp); }
 
   /* Word label on card */
   .card-word {
@@ -686,7 +686,7 @@
     </div>
     <div class="home-sub">Пора уже определить кто лучше&nbsp;–<br>котики или пёсики...</div>
     <div class="heroes">
-      <img src="/img/start-screen.png" class="hero-img" alt="cat and dog">
+      <img src="/img/start-screen.webp" class="hero-img" alt="cat and dog">
     </div>
   </div>
 
@@ -1201,7 +1201,7 @@ function showWin(winner, reason) {
     starsEl.style.display = 'flex';
     ribbon.textContent = 'ПОБЕДА';
     ribbon.className = 'wb-ribbon win';
-    charEl.src = winner === 'red' ? '/img/hero-dog.png' : '/img/hero-cat.png';
+    charEl.src = winner === 'red' ? '/img/hero-dog.webp' : '/img/hero-cat.webp';
     subtitle.textContent = winner === 'red' ? 'ПЁСИКИ ЛУЧШИЕ!' : 'КОТИКИ ТОП!';
     launchFireworks();
   } else {
@@ -1210,10 +1210,10 @@ function showWin(winner, reason) {
     ribbon.textContent = 'ПОРАЖЕНИЕ';
     ribbon.className = 'wb-ribbon lose';
     if (isAssassin) {
-      charEl.src = '/img/char-hamster.png';
+      charEl.src = '/img/char-hamster.webp';
       subtitle.textContent = 'ОШИБКА. ФАТАЛЬНАЯ ОШИБКА';
     } else {
-      charEl.src = winner === 'red' ? '/img/hero-dog.png' : '/img/hero-cat.png';
+      charEl.src = winner === 'red' ? '/img/hero-dog.webp' : '/img/hero-cat.webp';
       subtitle.textContent = winner === 'red' ? 'ПЁСИКИ ЛУЧШИЕ!' : 'КОТИКИ ТОП!';
     }
   }
