@@ -1022,6 +1022,7 @@ socket.on('game_started', () => {
   prevRevealed  = [];
   prevTurnTeam  = null;
   document.getElementById('win-banner').className = '';
+  stopFireworks();
   document.getElementById('btn-new-game').style.display = isHost ? 'block' : 'none';
   showScreen('game');
   const grid = document.getElementById('game-grid');
@@ -1238,18 +1239,25 @@ function launchConfetti() {
   // replaced by fireworks
 }
 
+let _fwTimer = null;
+
+function stopFireworks() {
+  if (_fwTimer) { clearTimeout(_fwTimer); _fwTimer = null; }
+  document.querySelectorAll('.fw-particle').forEach(el => el.remove());
+}
+
 function launchFireworks() {
+  stopFireworks();
   const COLORS = [
     '#ff4444','#ff9900','#ffdd00','#44ff44',
     '#44ddff','#aa44ff','#ff44aa','#ffffff',
     '#ff6666','#66ffaa','#ffbb33','#55aaff',
   ];
-  let burst = 0;
+
   function fireBurst() {
-    if (burst >= 14) return;
-    burst++;
-    const x = 15 + Math.random() * 70; // % from left
-    const y = 15 + Math.random() * 55; // % from top
+    if (!document.getElementById('win-banner').classList.contains('show')) return;
+    const x = 15 + Math.random() * 70;
+    const y = 10 + Math.random() * 55;
     const color1 = COLORS[(Math.random() * COLORS.length) | 0];
     const color2 = COLORS[(Math.random() * COLORS.length) | 0];
     const particleCount = 22 + (Math.random() * 14 | 0);
@@ -1259,8 +1267,8 @@ function launchFireworks() {
       p.className = 'fw-particle';
       const angle = (i / particleCount) * Math.PI * 2;
       const speed = 50 + Math.random() * 90;
-      const dx = Math.cos(angle) * speed;
-      const dy = Math.sin(angle) * speed - 30;
+      const dx  = Math.cos(angle) * speed;
+      const dy  = Math.sin(angle) * speed - 30;
       const color = Math.random() > .5 ? color1 : color2;
       const size  = 3 + Math.random() * 5;
       const dur   = 0.7 + Math.random() * 0.5;
@@ -1270,17 +1278,19 @@ function launchFireworks() {
         width:${size}px; height:${size}px;
         --dx:${dx}px; --dy:${dy}px;
         animation-duration:${dur}s;
-        box-shadow: 0 0 ${size+2}px ${color};
+        box-shadow: 0 0 ${size + 2}px ${color};
       `;
       document.body.appendChild(p);
       setTimeout(() => p.remove(), dur * 1000 + 100);
     }
-    const delay = 280 + Math.random() * 350;
-    setTimeout(fireBurst, delay);
+    // Schedule next burst (continuous loop)
+    _fwTimer = setTimeout(fireBurst, 300 + Math.random() * 400);
   }
+
+  // Start 3 bursts slightly offset for a volley feel
   fireBurst();
-  setTimeout(fireBurst, 150);
-  setTimeout(fireBurst, 320);
+  setTimeout(fireBurst, 160);
+  setTimeout(fireBurst, 340);
 }
 
 // ══════════════════════════════════════════════════════
