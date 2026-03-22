@@ -404,16 +404,84 @@
   #win-banner {
     display: none;
     position: fixed; inset: 0; z-index: 1000;
-    background: rgba(3,15,21,.88);
-    flex-direction: column; align-items: center; justify-content: center;
-    gap: 16px; padding: 24px;
+    flex-direction: column; align-items: center; justify-content: flex-end;
+    padding-bottom: max(60px, env(safe-area-inset-bottom, 60px));
   }
   #win-banner.show { display: flex; }
-  .win-title { font-size: clamp(2rem, 10vw, 3.2rem); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; text-align: center; }
-  .win-title.red  { color: var(--red); }
-  .win-title.blue { color: #6a8fff; }
-  .win-reason { font-size: 15px; font-weight: 400; color: rgba(255,255,255,.6); text-align: center; max-width: 280px; }
-  #btn-win-restart { max-width: 280px; }
+
+  /* Victory backgrounds */
+  #win-banner.mode-win.team-red  { background: linear-gradient(170deg,#5c0000 0%,#aa1010 35%,#fb2928 100%); }
+  #win-banner.mode-win.team-blue { background: linear-gradient(170deg,#040020 0%,#1e1490 35%,#362be5 100%); }
+  /* Defeat – blurred overlay */
+  #win-banner.mode-lose {
+    background: rgba(3,15,21,.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .wb-content {
+    display: flex; flex-direction: column; align-items: center;
+    width: 100%; max-width: 400px; padding: 0 24px;
+  }
+
+  /* Stars */
+  .wb-stars {
+    display: flex; align-items: flex-end; justify-content: center; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .wb-stars .star { color: #ffd700; line-height: 1; }
+  .wb-stars .star.sm { font-size: 2.2rem; }
+  .wb-stars .star.lg { font-size: 3.4rem; }
+
+  /* Character */
+  .wb-char {
+    width: 72%; max-width: 270px;
+    filter: drop-shadow(0 16px 40px rgba(0,0,0,.55));
+    margin-bottom: -18px;
+    position: relative; z-index: 2;
+    animation: wb-pop .5s cubic-bezier(.2,1.4,.4,1) both;
+  }
+  @keyframes wb-pop {
+    from { opacity:0; transform:translateY(30px) scale(.75); }
+    to   { opacity:1; transform:none; }
+  }
+
+  /* Ribbon */
+  .wb-ribbon {
+    width: 100%; max-width: 320px;
+    padding: 16px 48px;
+    text-align: center;
+    font-size: clamp(1.8rem, 8vw, 2.6rem);
+    font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+    clip-path: polygon(18px 0,calc(100% - 18px) 0,100% 50%,calc(100% - 18px) 100%,18px 100%,0 50%);
+    position: relative; z-index: 1;
+    animation: wb-ribbon-in .4s .15s ease both;
+  }
+  @keyframes wb-ribbon-in {
+    from { opacity:0; transform:scaleX(.6); }
+    to   { opacity:1; transform:none; }
+  }
+  .wb-ribbon.win  { background: #ffd700; color: #1a0600; }
+  .wb-ribbon.lose { background: #d42020; color: #fff; }
+
+  /* Subtitle */
+  .wb-subtitle {
+    margin-top: 18px;
+    font-size: clamp(.9rem, 4vw, 1.1rem);
+    font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+    color: rgba(255,255,255,.85); text-align: center;
+  }
+
+  /* Button */
+  .wb-btn {
+    margin-top: 28px; width: 200px;
+    background: transparent;
+    border: 2px solid rgba(255,255,255,.45);
+    color: var(--white); border-radius: 50px;
+    font-size: 15px; font-weight: 800; padding: 14px 24px; letter-spacing: .08em;
+    transition: background .15s;
+  }
+  .wb-btn:active { background: rgba(255,255,255,.15); transform: scale(.97); }
 
   /* ── Dossier overlay ── */
   #dossier {
@@ -576,9 +644,17 @@
      WIN BANNER
 ════════════════════════════ -->
 <div id="win-banner">
-  <div class="win-title" id="win-title">—</div>
-  <div class="win-reason" id="win-reason"></div>
-  <button class="btn btn-lime" id="btn-win-restart" style="display:none" onclick="socket.emit('restart')">Сыграть снова</button>
+  <div class="wb-content">
+    <div class="wb-stars" id="wb-stars">
+      <span class="star sm">★</span>
+      <span class="star lg">★</span>
+      <span class="star sm">★</span>
+    </div>
+    <img class="wb-char" id="wb-char" src="" alt="">
+    <div class="wb-ribbon" id="wb-ribbon">ПОБЕДА</div>
+    <div class="wb-subtitle" id="wb-subtitle"></div>
+    <button class="btn wb-btn" id="btn-win-restart" style="display:none" onclick="socket.emit('restart')">НОВАЯ ИГРА</button>
+  </div>
 </div>
 
 <!-- ════════════════════════════
@@ -763,7 +839,7 @@ socket.on('lobby', ({ players, hostName }) => {
 socket.on('game_started', () => {
   dossierDone = false;
   prevRevealed = [];
-  document.getElementById('win-banner').classList.remove('show');
+  document.getElementById('win-banner').className = '';
   document.getElementById('btn-new-game').style.display = isHost ? '' : 'none';
   showScreen('game');
   const grid = document.getElementById('game-grid');
@@ -910,14 +986,40 @@ function makePlayerItem(p) {
 //  WIN
 // ══════════════════════════════════════════════════════
 function showWin(winner, reason) {
-  const banner = document.getElementById('win-banner');
-  const title  = document.getElementById('win-title');
-  title.textContent = winner === 'red' ? '🐶 Пёсики победили!' : '🐱 Котики победили!';
-  title.className = 'win-title ' + winner;
-  document.getElementById('win-reason').textContent = reason;
+  const banner   = document.getElementById('win-banner');
+  const charEl   = document.getElementById('wb-char');
+  const ribbon   = document.getElementById('wb-ribbon');
+  const subtitle = document.getElementById('wb-subtitle');
+  const starsEl  = document.getElementById('wb-stars');
+  const isMyWin  = (myTeam === winner);
+  const isAssassin = reason && reason.includes('убийц');
+
+  // Reset
+  banner.className = 'show';
+
+  if (isMyWin) {
+    banner.classList.add('mode-win', 'team-' + winner);
+    starsEl.style.display = 'flex';
+    ribbon.textContent = 'ПОБЕДА';
+    ribbon.className = 'wb-ribbon win';
+    charEl.src = winner === 'red' ? '/img/hero-dog.png' : '/img/hero-cat.png';
+    subtitle.textContent = winner === 'red' ? 'ПЁСИКИ ЛУЧШИЕ!' : 'КОТИКИ ТОП!';
+    launchConfetti(winner);
+  } else {
+    banner.classList.add('mode-lose');
+    starsEl.style.display = 'none';
+    ribbon.textContent = 'ПОРАЖЕНИЕ';
+    ribbon.className = 'wb-ribbon lose';
+    if (isAssassin) {
+      charEl.src = '/img/char-hamster.png';
+      subtitle.textContent = 'ОШИБКА. ФАТАЛЬНАЯ ОШИБКА';
+    } else {
+      charEl.src = winner === 'red' ? '/img/hero-dog.png' : '/img/hero-cat.png';
+      subtitle.textContent = winner === 'red' ? 'ПЁСИКИ ЛУЧШИЕ!' : 'КОТИКИ ТОП!';
+    }
+  }
+
   document.getElementById('btn-win-restart').style.display = isHost ? '' : 'none';
-  banner.classList.add('show');
-  launchConfetti(winner);
 }
 
 function launchConfetti(winner) {
