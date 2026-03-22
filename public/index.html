@@ -96,45 +96,89 @@
   /* ═══════════════════════════════════════════
      HOME SCREEN
   ═══════════════════════════════════════════ */
+
+  /* Animated red↔blue background */
+  @keyframes bg-shift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
   #screen-home {
     position: relative; overflow: hidden;
     justify-content: flex-end;
     padding: 0 20px 40px;
+    background: linear-gradient(115deg,
+      #0b003d 0%, #1a0060 18%, #0d0028 32%,
+      #1a0a00 55%, #3d0000 72%, #1a0500 88%, #0b003d 100%);
+    background-size: 300% 300%;
+    animation: bg-shift 8s ease-in-out infinite;
   }
-  #screen-home .glow-red  { top: -60px; right: -80px; }
-  #screen-home .glow-blue { bottom: 60px; left: -80px; }
+
+  /* Dark top fade so logo is readable */
+  #screen-home::before {
+    content: '';
+    position: absolute; inset: 0; z-index: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,.35) 0%, transparent 45%, rgba(0,0,0,.25) 100%);
+    pointer-events: none;
+  }
 
   .home-top {
     flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
+    align-items: center; justify-content: flex-start;
     position: relative; z-index: 1; width: 100%;
-    padding-top: 20px;
+    padding-top: 44px;
   }
 
+  /* ── Logo ── */
   .home-logo {
-    font-size: clamp(2.8rem, 14vw, 4.8rem); font-weight: 800;
-    letter-spacing: .08em; color: var(--white);
-    text-align: center; line-height: 1; margin-bottom: 4px;
-    text-transform: uppercase;
+    display: flex; align-items: center; justify-content: center; gap: 0;
+    text-align: center; line-height: 1; margin-bottom: 12px;
+    font-size: clamp(2.6rem, 13vw, 4.4rem); font-weight: 800;
+    letter-spacing: .02em; color: var(--white);
+    text-transform: none;
+    filter: drop-shadow(0 2px 16px rgba(0,0,0,.5));
   }
-  .home-logo span { color: var(--lime); }
+
+  /* Paw icon inside logo */
+  .logo-paw {
+    display: inline-flex; align-items: center;
+    width: .72em; height: .72em;
+    margin: 0 .04em 0 .02em;
+    vertical-align: -.06em;
+    flex-shrink: 0;
+  }
+  .logo-paw svg { width: 100%; height: 100%; }
 
   .home-sub {
-    font-size: 14px; font-weight: 300; letter-spacing: .1em;
-    color: rgba(255,255,255,.45); text-transform: uppercase;
+    font-size: clamp(13px, 3.5vw, 16px);
+    font-weight: 400; letter-spacing: .01em;
+    color: rgba(255,255,255,.72);
     text-align: center; margin-bottom: 0;
+    max-width: 280px; line-height: 1.45;
   }
 
   .heroes {
     display: flex; align-items: flex-end; justify-content: center;
-    gap: 0; width: 100%; max-width: 360px;
-    margin: 12px auto 0;
+    width: 100%; max-width: 380px;
+    margin: 16px auto 0;
+    /* overlap heroes slightly in the middle */
+    gap: -20px;
   }
   .hero-img {
-    width: 50%; max-width: 180px;
-    filter: drop-shadow(0 8px 24px rgba(0,0,0,.5));
+    width: 52%; max-width: 200px;
+    filter: drop-shadow(0 8px 32px rgba(0,0,0,.6));
+    flex-shrink: 0;
   }
-  .hero-img.cat { transform: scaleX(-1); }
+  /* Cat flipped, overlaps dog slightly */
+  .hero-img.cat {
+    transform: scaleX(-1);
+    margin-right: -24px;
+    position: relative; z-index: 2;
+  }
+  .hero-img.dog {
+    position: relative; z-index: 1;
+  }
 
   .home-form {
     display: flex; flex-direction: column; gap: 12px;
@@ -532,12 +576,23 @@
      HOME SCREEN
 ════════════════════════════ -->
 <div id="screen-home" class="screen active">
-  <div class="glow-red"></div>
-  <div class="glow-blue"></div>
-
   <div class="home-top">
-    <div class="home-logo">Cat<span>Names</span></div>
-    <div class="home-sub">Котики против Пёсиков</div>
+    <div class="home-logo">
+      <span>C</span><span class="logo-paw"><!-- cat paw SVG -->
+        <svg viewBox="0 0 40 40" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <!-- main paw pad -->
+          <ellipse cx="20" cy="27" rx="9" ry="8"/>
+          <!-- toe beans -->
+          <ellipse cx="10" cy="19" rx="4.5" ry="5.5"/>
+          <ellipse cx="20" cy="16" rx="4.5" ry="5.5"/>
+          <ellipse cx="30" cy="19" rx="4.5" ry="5.5"/>
+          <!-- top small toe -->
+          <ellipse cx="15" cy="12" rx="3.2" ry="4"/>
+          <ellipse cx="25" cy="12" rx="3.2" ry="4"/>
+        </svg>
+      </span><span>tNames</span>
+    </div>
+    <div class="home-sub">Пора уже определить кто лучше&nbsp;–<br>котики или пёсики...</div>
     <div class="heroes">
       <img src="/img/hero-cat.png" class="hero-img cat" alt="cat">
       <img src="/img/hero-dog.png" class="hero-img dog" alt="dog">
