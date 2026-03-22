@@ -249,24 +249,24 @@
     position: relative;
   }
 
-  /* Animated color layer — swapped by JS via data-team attr */
+  /* Background glow — based on MY team (data-myteam), not current turn */
   #screen-game::before {
     content: '';
     position: absolute; inset: 0; z-index: 0; pointer-events: none;
-    transition: background 1.2s ease;
-    animation: game-glow-pulse 3s ease-in-out infinite;
+    transition: background 1.4s ease;
+    animation: game-glow-pulse 4s ease-in-out infinite;
   }
-  #screen-game[data-team="red"]::before {
-    background: radial-gradient(ellipse 120% 60% at 50% 100%,
-      rgba(180,20,20,.28) 0%, transparent 70%),
-      radial-gradient(ellipse 80% 40% at 80% 20%,
-      rgba(160,10,10,.14) 0%, transparent 60%);
+  #screen-game[data-myteam="red"]::before {
+    background:
+      radial-gradient(ellipse 140% 55% at 50% 105%,  rgba(200,20,20,.22) 0%, transparent 65%),
+      radial-gradient(ellipse 70%  45% at 15%  0%,   rgba(160,10,10,.12) 0%, transparent 55%),
+      radial-gradient(ellipse 60%  35% at 85% 30%,   rgba(180,15,15,.10) 0%, transparent 50%);
   }
-  #screen-game[data-team="blue"]::before {
-    background: radial-gradient(ellipse 120% 60% at 50% 100%,
-      rgba(40,30,220,.28) 0%, transparent 70%),
-      radial-gradient(ellipse 80% 40% at 20% 20%,
-      rgba(30,20,200,.14) 0%, transparent 60%);
+  #screen-game[data-myteam="blue"]::before {
+    background:
+      radial-gradient(ellipse 140% 55% at 50% 105%,  rgba(30,20,220,.22) 0%, transparent 65%),
+      radial-gradient(ellipse 70%  45% at 85%  0%,   rgba(20,10,200,.12) 0%, transparent 55%),
+      radial-gradient(ellipse 60%  35% at 15% 30%,   rgba(25,15,210,.10) 0%, transparent 50%);
   }
 
   /* All direct children above the glow layer */
@@ -283,13 +283,22 @@
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 4px;
   }
-  .turn-banner.team-blue { background: rgba(54,43,229,.25); border: 1.5px solid rgba(54,43,229,.6); }
-  .turn-banner.team-red  { background: rgba(251,41,40,.25);  border: 1.5px solid rgba(251,41,40,.6); }
+  .turn-banner.team-blue {
+    background: linear-gradient(90deg, rgba(54,43,229,.35) 0%, rgba(54,43,229,.15) 100%);
+    border: 1.5px solid rgba(54,43,229,.7);
+    box-shadow: 0 0 18px rgba(54,43,229,.25);
+  }
+  .turn-banner.team-red {
+    background: linear-gradient(90deg, rgba(251,41,40,.35) 0%, rgba(251,41,40,.15) 100%);
+    border: 1.5px solid rgba(251,41,40,.7);
+    box-shadow: 0 0 18px rgba(251,41,40,.25);
+  }
   .turn-label {
     font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em;
   }
-  .turn-label.mine   { color: var(--lime); }
-  .turn-label.theirs { color: rgba(255,255,255,.75); }
+  .turn-banner.team-blue .turn-label { color: #7aabff; }
+  .turn-banner.team-red  .turn-label { color: #ff8888; }
+  .turn-label.mine { color: var(--lime) !important; }
   .turn-scores { display: flex; gap: 8px; }
   .score-pill {
     font-size: 12px; font-weight: 800; padding: 2px 9px;
@@ -604,6 +613,26 @@
     position: relative; z-index: 3;
   }
   .wb-btn:active { background: rgba(255,255,255,.15); transform: scale(.97); }
+
+  /* ── Fireworks ── */
+  .fw-shell {
+    position: fixed; pointer-events: none; z-index: 1001;
+    width: 6px; height: 6px; border-radius: 50%;
+    animation: fw-rise linear forwards;
+  }
+  @keyframes fw-rise {
+    from { transform: translateY(0) scale(1); opacity: 1; }
+    to   { transform: translateY(var(--rise)) scale(.3); opacity: 0; }
+  }
+  .fw-particle {
+    position: fixed; pointer-events: none; z-index: 1001;
+    width: 5px; height: 5px; border-radius: 50%;
+    animation: fw-burst linear forwards;
+  }
+  @keyframes fw-burst {
+    0%   { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--dx),var(--dy)) scale(.1); opacity: 0; }
+  }
 
   /* ── Dossier overlay ── */
   #dossier {
@@ -992,7 +1021,7 @@ socket.on('state', data => {
   // Mark screen for captain-specific styles
   document.getElementById('screen-game').classList.toggle('is-captain', mr === 'captain');
 
-  document.getElementById('screen-game').dataset.team = currentTeam;
+  if (mt) document.getElementById('screen-game').dataset.myteam = mt;
   updateHeader(currentTeam, redLeft, blueLeft, mt, players);
   updateGameBar(currentTeam, mt, winner);
 
@@ -1164,7 +1193,7 @@ function showWin(winner, reason) {
     ribbon.className = 'wb-ribbon win';
     charEl.src = winner === 'red' ? '/img/hero-dog.png' : '/img/hero-cat.png';
     subtitle.textContent = winner === 'red' ? 'ПЁСИКИ ЛУЧШИЕ!' : 'КОТИКИ ТОП!';
-    launchConfetti(winner);
+    launchFireworks();
   } else {
     banner.classList.add('mode-lose');
     starsEl.style.display = 'none';
@@ -1182,24 +1211,53 @@ function showWin(winner, reason) {
   document.getElementById('btn-win-restart').style.display = isHost ? '' : 'none';
 }
 
-function launchConfetti(winner) {
-  const colors = winner === 'red'
-    ? ['#fb2928','#ff6b6b','#ff9999','#ffcccc']
-    : ['#362be5','#6a8fff','#99b3ff','#ccd9ff'];
-  for (let i = 0; i < 60; i++) {
-    const d = document.createElement('div');
-    d.className = 'confetti';
-    d.style.cssText = `
-      left:${Math.random()*100}%;
-      background:${colors[(Math.random()*colors.length)|0]};
-      width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;
-      border-radius:${Math.random() > .5 ? '50%' : '2px'};
-      animation-duration:${1.5+Math.random()*2}s;
-      animation-delay:${Math.random()*.8}s;
-    `;
-    document.body.appendChild(d);
-    setTimeout(() => d.remove(), 4000);
+function launchConfetti() {
+  // replaced by fireworks
+}
+
+function launchFireworks() {
+  const COLORS = [
+    '#ff4444','#ff9900','#ffdd00','#44ff44',
+    '#44ddff','#aa44ff','#ff44aa','#ffffff',
+    '#ff6666','#66ffaa','#ffbb33','#55aaff',
+  ];
+  let burst = 0;
+  function fireBurst() {
+    if (burst >= 14) return;
+    burst++;
+    const x = 15 + Math.random() * 70; // % from left
+    const y = 15 + Math.random() * 55; // % from top
+    const color1 = COLORS[(Math.random() * COLORS.length) | 0];
+    const color2 = COLORS[(Math.random() * COLORS.length) | 0];
+    const particleCount = 22 + (Math.random() * 14 | 0);
+
+    for (let i = 0; i < particleCount; i++) {
+      const p = document.createElement('div');
+      p.className = 'fw-particle';
+      const angle = (i / particleCount) * Math.PI * 2;
+      const speed = 50 + Math.random() * 90;
+      const dx = Math.cos(angle) * speed;
+      const dy = Math.sin(angle) * speed - 30;
+      const color = Math.random() > .5 ? color1 : color2;
+      const size  = 3 + Math.random() * 5;
+      const dur   = 0.7 + Math.random() * 0.5;
+      p.style.cssText = `
+        left:${x}vw; top:${y}vh;
+        background:${color};
+        width:${size}px; height:${size}px;
+        --dx:${dx}px; --dy:${dy}px;
+        animation-duration:${dur}s;
+        box-shadow: 0 0 ${size+2}px ${color};
+      `;
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), dur * 1000 + 100);
+    }
+    const delay = 280 + Math.random() * 350;
+    setTimeout(fireBurst, delay);
   }
+  fireBurst();
+  setTimeout(fireBurst, 150);
+  setTimeout(fireBurst, 320);
 }
 
 // ══════════════════════════════════════════════════════
