@@ -348,11 +348,11 @@
     position: relative;
     aspect-ratio: 1 / .7;
     border-radius: 5px;
-    overflow: hidden;
     display: flex; flex-direction: column;
     align-items: center; justify-content: flex-end;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    -webkit-transform-style: preserve-3d;
     transform-style: preserve-3d;
     perspective: 600px;
   }
@@ -361,6 +361,7 @@
   .card-inner {
     position: absolute; inset: 0;
     transition: transform .55s cubic-bezier(.4,0,.2,1);
+    -webkit-transform-style: preserve-3d;
     transform-style: preserve-3d;
   }
   .card.flipped .card-inner { transform: rotateY(180deg); }
@@ -394,14 +395,14 @@
   }
 
   /* Stamp corner decoration */
-  .card-front::after {
-    content: '';
+  .front-stamp {
     position: absolute; top: 5px; right: 5px;
     width: 14px; height: 18px;
     background: linear-gradient(135deg, #f0d888, #d4a820);
     border: 1px solid var(--stamp); border-radius: 1px;
     box-shadow: inset 0 0 0 2px rgba(255,255,255,.35);
     z-index: 2;
+    pointer-events: none;
   }
 
   /* Captain color tints (front) */
@@ -462,6 +463,7 @@
   /* Clickable */
   .card.clickable { cursor: pointer; }
   .card.clickable:active .card-inner { transform: scale(.93); }
+  .card.clickable.flipped:active .card-inner { transform: rotateY(180deg) scale(.93); }
   .card.clickable .card-front { transition: box-shadow .15s; }
   .card.clickable:hover .card-front { box-shadow: 0 4px 14px rgba(0,0,0,.4), 0 0 0 2px rgba(255,220,100,.4), inset 0 1px 0 rgba(255,255,255,.7); }
 
@@ -1037,7 +1039,7 @@ function renderCards(cards, canClick) {
       const el = document.createElement('div');
       el.className = 'card dealing';
       el.style.animationDelay = `${i * 32}ms`;
-      el.innerHTML = `<div class="card-inner"><div class="card-front"></div><div class="card-back"></div></div>`;
+      el.innerHTML = `<div class="card-inner"><div class="card-front"><span class="front-stamp"></span></div><div class="card-back"></div></div>`;
       grid.appendChild(el);
     });
   }
