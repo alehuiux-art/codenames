@@ -140,7 +140,7 @@
     filter: drop-shadow(0 2px 20px rgba(0,0,0,.5));
   }
   .home-logo img {
-    height: clamp(32px, 8vw, 48px);
+    height: clamp(48px, 12vw, 72px);
     width: auto;
     display: block;
   }
@@ -160,18 +160,9 @@
     flex: 1; min-height: 0;
   }
   .hero-img {
-    height: 100%;
-    width: 50%;
+    width: 100%; height: 100%;
     object-fit: contain; object-position: bottom center;
-    filter: drop-shadow(0 8px 32px rgba(0,0,0,.6));
-    flex-shrink: 0;
-  }
-  .hero-img.cat {
-    transform: scaleX(-1);
-    position: relative; z-index: 2;
-  }
-  .hero-img.dog {
-    position: relative; z-index: 1;
+    filter: drop-shadow(0 8px 32px rgba(0,0,0,.4));
   }
 
   .home-form {
@@ -611,8 +602,7 @@
     </div>
     <div class="home-sub">Пора уже определить кто лучше&nbsp;–<br>котики или пёсики...</div>
     <div class="heroes">
-      <img src="/img/hero-cat.png" class="hero-img cat" alt="cat">
-      <img src="/img/hero-dog.png" class="hero-img dog" alt="dog">
+      <img src="/img/start-screen.png" class="hero-img" alt="cat and dog">
     </div>
   </div>
 
