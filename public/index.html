@@ -258,15 +258,15 @@
   }
   #screen-game[data-myteam="red"]::before {
     background:
-      radial-gradient(ellipse 140% 55% at 50% 105%,  rgba(200,20,20,.22) 0%, transparent 65%),
-      radial-gradient(ellipse 70%  45% at 15%  0%,   rgba(160,10,10,.12) 0%, transparent 55%),
-      radial-gradient(ellipse 60%  35% at 85% 30%,   rgba(180,15,15,.10) 0%, transparent 50%);
+      radial-gradient(ellipse 140% 55% at 50% 105%,  rgba(210,25,25,.42) 0%, transparent 65%),
+      radial-gradient(ellipse 75%  50% at 10%  0%,   rgba(170,15,15,.24) 0%, transparent 55%),
+      radial-gradient(ellipse 65%  40% at 90% 35%,   rgba(190,20,20,.18) 0%, transparent 50%);
   }
   #screen-game[data-myteam="blue"]::before {
     background:
-      radial-gradient(ellipse 140% 55% at 50% 105%,  rgba(30,20,220,.22) 0%, transparent 65%),
-      radial-gradient(ellipse 70%  45% at 85%  0%,   rgba(20,10,200,.12) 0%, transparent 55%),
-      radial-gradient(ellipse 60%  35% at 15% 30%,   rgba(25,15,210,.10) 0%, transparent 50%);
+      radial-gradient(ellipse 140% 55% at 50% 105%,  rgba(35,25,225,.42) 0%, transparent 65%),
+      radial-gradient(ellipse 75%  50% at 90%  0%,   rgba(22,14,205,.24) 0%, transparent 55%),
+      radial-gradient(ellipse 65%  40% at 10% 35%,   rgba(28,18,215,.18) 0%, transparent 50%);
   }
 
   /* All direct children above the glow layer */
@@ -777,6 +777,12 @@
     <div class="dossier-team" id="dossier-team">—</div>
     <div class="dossier-role" id="dossier-role">—</div>
     <div class="dossier-desc" id="dossier-desc"></div>
+    <div id="dossier-first-turn" style="
+      margin-top:4px; padding:6px 14px; border-radius:8px;
+      font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+      color:rgba(255,255,255,.9); background:rgba(255,255,255,.08);
+      text-align:center;
+    "></div>
     <button class="btn btn-lime" id="btn-dossier-ok" onclick="closeDossier()">Понятно!</button>
   </div>
 </div>
@@ -915,14 +921,24 @@ function doJoinManual() {
 // ══════════════════════════════════════════════════════
 //  DOSSIER
 // ══════════════════════════════════════════════════════
-function showDossier(team, role) {
-  const teamName = team === 'red' ? 'Пёсики' : 'Котики';
+function showDossier(team, role, firstTeam) {
+  const teamName  = team      === 'red' ? 'Пёсики' : 'Котики';
+  const firstName = firstTeam === 'red' ? '🐶 Пёсики' : '🐱 Котики';
+  const isFirstMine = firstTeam === team;
+
   document.getElementById('dossier-team').textContent = teamName;
-  document.getElementById('dossier-team').className = 'dossier-team ' + team;
+  document.getElementById('dossier-team').className   = 'dossier-team ' + team;
   document.getElementById('dossier-role').textContent = role === 'captain' ? 'Капитан' : 'Агент';
   document.getElementById('dossier-desc').textContent = role === 'captain'
     ? 'Вы видите цвета всех карт. Давайте подсказки вслух — одно слово команде.'
     : 'Слушайте капитана и открывайте карты.';
+
+  const ftEl = document.getElementById('dossier-first-turn');
+  ftEl.textContent = 'Первый ход: ' + firstName + (isFirstMine ? ' — это вы!' : '');
+  ftEl.style.background = isFirstMine
+    ? (firstTeam === 'red' ? 'rgba(251,41,40,.22)' : 'rgba(54,43,229,.22)')
+    : 'rgba(255,255,255,.07)';
+
   document.getElementById('dossier').classList.add('show');
 }
 function closeDossier() {
@@ -1010,7 +1026,7 @@ socket.on('state', data => {
   const { cards, currentTeam, redLeft, blueLeft, winner, winReason, myTeam: mt, myRole: mr, players } = data;
   myTeam = mt; myRole = mr;
 
-  if (!dossierDone && mt && mr) showDossier(mt, mr);
+  if (!dossierDone && mt && mr) showDossier(mt, mr, currentTeam);
 
   // Mark screen for captain-specific styles
   document.getElementById('screen-game').classList.toggle('is-captain', mr === 'captain');
