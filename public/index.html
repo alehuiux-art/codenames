@@ -210,40 +210,76 @@
   #screen-game {
     background: linear-gradient(180deg, var(--bg) 0%, #060d22 60%, #08123a 100%);
     padding: 0; justify-content: flex-start; max-width: 100%;
+    height: 100dvh; overflow: hidden;
   }
 
-  /* Card grid – 3 columns */
+  /* ── Top header ── */
+  .game-header {
+    width: 100%; padding: 8px 8px 4px; flex-shrink: 0;
+  }
+
+  /* Turn banner */
+  .turn-banner {
+    border-radius: 10px; padding: 7px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 5px;
+  }
+  .turn-banner.team-blue { background: rgba(54,43,229,.25); border: 1.5px solid rgba(54,43,229,.6); }
+  .turn-banner.team-red  { background: rgba(251,41,40,.25); border: 1.5px solid rgba(251,41,40,.6); }
+  .turn-label {
+    font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
+  }
+  .turn-label.mine  { color: var(--lime); }
+  .turn-label.theirs { color: rgba(255,255,255,.7); }
+  .turn-scores { display: flex; gap: 10px; }
+  .score-pill {
+    font-size: 12px; font-weight: 800; padding: 2px 8px;
+    border-radius: 20px; letter-spacing: .04em;
+  }
+  .score-pill.blue { background: rgba(54,43,229,.4); color: #aac0ff; }
+  .score-pill.red  { background: rgba(251,41,40,.4);  color: #ffaaaa; }
+  @keyframes pulse-banner { 0%,100%{opacity:1} 50%{opacity:.7} }
+  .turn-label.mine { animation: pulse-banner 1.8s ease-in-out infinite; }
+
+  /* Teams strip */
+  .teams-strip {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 5px; margin-bottom: 4px;
+  }
+  .team-col {
+    border-radius: 8px; padding: 5px 8px;
+    background: rgba(255,255,255,.05);
+  }
+  .team-col.blue { border-left: 2px solid rgba(54,43,229,.7); }
+  .team-col.red  { border-left: 2px solid rgba(251,41,40,.7); }
+  .team-col-title {
+    font-size: 10px; font-weight: 800; letter-spacing: .1em;
+    text-transform: uppercase; margin-bottom: 3px;
+  }
+  .team-col.blue .team-col-title { color: #7a9fff; }
+  .team-col.red  .team-col-title { color: #ff8080; }
+  .team-members {
+    display: flex; flex-wrap: wrap; gap: 3px;
+  }
+  .member-chip {
+    font-size: 10px; font-weight: 700;
+    padding: 1px 5px; border-radius: 10px;
+    background: rgba(255,255,255,.1); color: rgba(255,255,255,.8);
+    white-space: nowrap; max-width: 80px;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .member-chip.captain { color: var(--lime); }
+
+  /* Card grid – 5 columns */
   .game-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 5px;
-    padding: 8px 8px 0;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    padding: 0 8px;
     width: 100%;
+    flex: 1;
+    align-content: start;
   }
-
-  /* Status bar cell spans 2 cols */
-  .status-cell {
-    grid-column: 1 / 3;
-    background: rgba(255,255,255,.08);
-    border-radius: var(--card-r);
-    padding: 6px 10px;
-    display: flex; flex-direction: column;
-    justify-content: center; gap: 2px;
-    min-height: 0;
-  }
-  .status-turn {
-    font-size: 13px; font-weight: 800; text-transform: uppercase;
-    letter-spacing: .04em; line-height: 1;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .status-turn.mine { color: var(--lime); }
-  .status-turn.theirs { color: rgba(255,255,255,.55); }
-  .status-scores {
-    display: flex; gap: 8px;
-    font-size: 11px; font-weight: 700; letter-spacing: .04em;
-  }
-  .score-blue { color: #7a9fff; }
-  .score-red  { color: #ff7a7a; }
 
   /* ── Card ── */
   .card {
@@ -302,19 +338,17 @@
   .card-word {
     position: relative; z-index: 2;
     font-family: 'Roboto Condensed', sans-serif;
-    font-size: clamp(.5rem, 2.8vw, .78rem);
-    font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
-    text-align: center; line-height: 1.1;
-    padding: 3px 6px 4px;
+    font-size: clamp(.42rem, 2.2vw, .62rem);
+    font-weight: 800; letter-spacing: .03em; text-transform: uppercase;
+    text-align: center; line-height: 1;
+    padding: 2px 3px 3px;
     width: 100%;
-    /* Pill label with solid background for readability */
-    background: rgba(255,255,255,.92);
+    background: rgba(255,255,255,.93);
     color: var(--dark);
     border-top: 1px solid rgba(0,0,0,.08);
   }
-  /* Revealed back: dark background label */
   .card-back .card-word {
-    background: rgba(0,0,0,.55);
+    background: rgba(0,0,0,.6);
     color: var(--white);
     border-top: none;
   }
@@ -328,18 +362,11 @@
 
   /* ── Game bottom bar ── */
   .game-bar {
-    display: flex; gap: 8px; padding: 8px 8px;
-    width: 100%; align-items: center;
+    display: flex; gap: 6px; padding: 5px 8px 8px;
+    width: 100%; align-items: center; flex-shrink: 0;
   }
   #btn-end-turn { display: none; flex: 1; }
-  #btn-restart  { display: none; }
-  .btn-icon {
-    background: rgba(255,255,255,.1); border: none; border-radius: 12px;
-    color: var(--white); font-size: 18px; cursor: pointer;
-    padding: 14px 16px;
-    transition: background .15s;
-  }
-  .btn-icon:active { background: rgba(255,255,255,.2); }
+  #btn-new-game { display: none; flex: 1; }
 
   /* ── Win banner ── */
   #win-banner {
@@ -397,32 +424,6 @@
   @keyframes pulse-lime { 0%,100%{opacity:1} 50%{opacity:.6} }
   .status-turn.mine { animation: pulse-lime 2s ease-in-out infinite; }
 
-  /* ── Players in game (panel) ── */
-  #game-players-btn {
-    position: fixed; top: 12px; right: 12px; z-index: 100;
-    background: rgba(255,255,255,.12); border: none; border-radius: 10px;
-    color: var(--white); font-size: 18px; cursor: pointer;
-    padding: 8px 10px;
-  }
-  #game-players-panel {
-    display: none; position: fixed; top: 0; right: 0; bottom: 0; width: 75%; max-width: 280px;
-    background: #040e1a; z-index: 500; padding: 20px 16px;
-    overflow-y: auto; box-shadow: -8px 0 30px rgba(0,0,0,.6);
-    flex-direction: column; gap: 8px;
-  }
-  #game-players-panel.open { display: flex; }
-  .panel-overlay {
-    display: none; position: fixed; inset: 0; z-index: 499;
-    background: rgba(0,0,0,.5);
-  }
-  .panel-overlay.open { display: block; }
-  .panel-title { font-size: 14px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.4); margin-bottom: 4px; }
-  .panel-team-label {
-    font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
-    padding: 6px 0 2px; margin-top: 4px;
-  }
-  .panel-team-label.red  { color: var(--red); }
-  .panel-team-label.blue { color: #7a9fff; }
   </style>
 </head>
 <body>
@@ -498,21 +499,32 @@
      GAME SCREEN
 ════════════════════════════ -->
 <div id="screen-game" class="screen">
+  <!-- Header: turn + teams -->
+  <div class="game-header">
+    <div class="turn-banner" id="turn-banner">
+      <div class="turn-label" id="turn-label">—</div>
+      <div class="turn-scores" id="turn-scores"></div>
+    </div>
+    <div class="teams-strip" id="teams-strip">
+      <div class="team-col blue">
+        <div class="team-col-title">🐱 Котики</div>
+        <div class="team-members" id="team-blue-members"></div>
+      </div>
+      <div class="team-col red">
+        <div class="team-col-title">🐶 Пёсики</div>
+        <div class="team-members" id="team-red-members"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card grid (5 cols) -->
   <div class="game-grid" id="game-grid"></div>
+
+  <!-- Bottom bar -->
   <div class="game-bar">
     <button class="btn btn-lime" id="btn-end-turn" onclick="socket.emit('end_turn')">Завершить ход</button>
-    <button class="btn-icon" id="btn-restart" onclick="socket.emit('restart')" title="Новая игра">↺</button>
-    <button class="btn-icon" onclick="togglePanel()">☰</button>
+    <button class="btn btn-outline" id="btn-new-game" onclick="socket.emit('restart')">Новая игра</button>
   </div>
-</div>
-
-<!-- ════════════════════════════
-     PLAYERS PANEL (slide)
-════════════════════════════ -->
-<div class="panel-overlay" id="panel-overlay" onclick="togglePanel()"></div>
-<div id="game-players-panel">
-  <div class="panel-title">Игроки</div>
-  <div id="panel-players"></div>
 </div>
 
 <!-- ════════════════════════════
@@ -655,13 +667,6 @@ function closeDossier() {
   dossierDone = true;
 }
 
-// ══════════════════════════════════════════════════════
-//  PLAYERS PANEL
-// ══════════════════════════════════════════════════════
-function togglePanel() {
-  document.getElementById('game-players-panel').classList.toggle('open');
-  document.getElementById('panel-overlay').classList.toggle('open');
-}
 
 // ══════════════════════════════════════════════════════
 //  QR CODE
@@ -730,11 +735,6 @@ socket.on('game_started', () => {
   showScreen('game');
   const grid = document.getElementById('game-grid');
   grid.innerHTML = '';
-  // Create status cell + 25 card placeholders
-  const statusCell = document.createElement('div');
-  statusCell.className = 'status-cell';
-  statusCell.id = 'status-cell';
-  grid.appendChild(statusCell);
   for (let i = 0; i < 25; i++) {
     const el = document.createElement('div');
     el.className = 'card dealing';
@@ -750,14 +750,13 @@ socket.on('state', data => {
 
   if (!dossierDone && mt && mr) showDossier(mt, mr);
 
-  updateStatusCell(currentTeam, redLeft, blueLeft, mt);
-  updateGameBar(currentTeam, mt, mr, winner);
-  updatePanelPlayers(players);
+  updateHeader(currentTeam, redLeft, blueLeft, mt, players);
+  updateGameBar(currentTeam, mt, winner);
 
   const grid = document.getElementById('game-grid');
   // grid.children[0] = status cell; [1..25] = cards
   cards.forEach((card, i) => {
-    const el = grid.children[i + 1];
+    const el = grid.children[i];
     if (!el) return;
     const front = el.querySelector('.card-front');
     const back  = el.querySelector('.card-back');
@@ -813,49 +812,44 @@ socket.on('err', showToast);
 // ══════════════════════════════════════════════════════
 //  UI UPDATES
 // ══════════════════════════════════════════════════════
-function updateStatusCell(currentTeam, redLeft, blueLeft, mt) {
-  const cell = document.getElementById('status-cell');
-  if (!cell) return;
-  const isMine = currentTeam === mt;
-  const teamName = currentTeam === 'red' ? 'Пёсики 🐶' : 'Котики 🐱';
-  cell.innerHTML = `
-    <div class="status-turn ${isMine ? 'mine' : 'theirs'}">Ходят ${teamName}</div>
-    <div class="status-scores">
-      <span class="score-blue">🐱 ${blueLeft}</span>
-      <span class="score-red">🐶 ${redLeft}</span>
-    </div>`;
-}
+function updateHeader(currentTeam, redLeft, blueLeft, mt, players) {
+  const isMine   = currentTeam === mt;
+  const teamName = currentTeam === 'red' ? 'Ходят Пёсики 🐶' : 'Ходят Котики 🐱';
 
-function updateGameBar(currentTeam, mt, mr, winner) {
-  const endBtn  = document.getElementById('btn-end-turn');
-  const restBtn = document.getElementById('btn-restart');
-  endBtn.style.display  = (!winner && currentTeam === mt) ? '' : 'none';
-  restBtn.style.display = (isHost) ? '' : 'none';
-}
+  // Turn banner
+  const banner = document.getElementById('turn-banner');
+  banner.className = 'turn-banner team-' + currentTeam;
 
-function updatePanelPlayers(players) {
-  const el = document.getElementById('panel-players');
-  el.innerHTML = '';
+  const label = document.getElementById('turn-label');
+  label.textContent = teamName;
+  label.className   = 'turn-label ' + (isMine ? 'mine' : 'theirs');
+
+  document.getElementById('turn-scores').innerHTML =
+    `<span class="score-pill blue">🐱 ${blueLeft}</span>
+     <span class="score-pill red">🐶 ${redLeft}</span>`;
+
+  // Teams strip
   const blues = players.filter(p => p.team === 'blue');
   const reds  = players.filter(p => p.team === 'red');
 
-  if (blues.length) {
-    const lbl = document.createElement('div');
-    lbl.className = 'panel-team-label blue';
-    lbl.textContent = 'Котики 🐱';
-    el.appendChild(lbl);
-    blues.forEach(p => el.appendChild(makePlayerItem(p)));
+  function renderMembers(containerId, members) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = '';
+    members.forEach(p => {
+      const chip = document.createElement('span');
+      chip.className = 'member-chip' + (p.role === 'captain' ? ' captain' : '');
+      chip.textContent = (p.role === 'captain' ? '👑 ' : '') + p.name;
+      if (!p.online) chip.style.opacity = '.4';
+      el.appendChild(chip);
+    });
   }
-  if (reds.length) {
-    const lbl = document.createElement('div');
-    lbl.className = 'panel-team-label red';
-    lbl.textContent = 'Пёсики 🐶';
-    el.appendChild(lbl);
-    reds.forEach(p => el.appendChild(makePlayerItem(p)));
-  }
-  if (!blues.length && !reds.length) {
-    players.forEach(p => el.appendChild(makePlayerItem(p)));
-  }
+  renderMembers('team-blue-members', blues);
+  renderMembers('team-red-members',  reds);
+}
+
+function updateGameBar(currentTeam, mt, winner) {
+  document.getElementById('btn-end-turn').style.display = (!winner && currentTeam === mt) ? '' : 'none';
+  document.getElementById('btn-new-game').style.display = isHost ? '' : 'none';
 }
 
 function makePlayerItem(p) {
