@@ -302,19 +302,22 @@
   .card-word {
     position: relative; z-index: 2;
     font-family: 'Roboto Condensed', sans-serif;
-    font-size: clamp(.48rem, 2.8vw, .75rem);
+    font-size: clamp(.5rem, 2.8vw, .78rem);
     font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
     text-align: center; line-height: 1.1;
-    padding: 2px 4px 5px;
-    text-shadow: 0 1px 2px rgba(0,0,0,.7);
-    color: var(--white);
+    padding: 3px 6px 4px;
     width: 100%;
+    /* Pill label with solid background for readability */
+    background: rgba(255,255,255,.92);
+    color: var(--dark);
+    border-top: 1px solid rgba(0,0,0,.08);
   }
-  .card-front .card-word { color: var(--dark); text-shadow: none; }
-  .card.hint-red    .card-front .card-word,
-  .card.hint-blue   .card-front .card-word,
-  .card.hint-neutral .card-front .card-word,
-  .card.hint-assassin .card-front .card-word { color: var(--white); text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+  /* Revealed back: dark background label */
+  .card-back .card-word {
+    background: rgba(0,0,0,.55);
+    color: var(--white);
+    border-top: none;
+  }
 
   /* Deal animation */
   @keyframes deal-in {
@@ -442,14 +445,16 @@
 
   <div class="home-form">
     <input id="name-input" class="inp" type="text" placeholder="Ваше имя" maxlength="20" autocomplete="off"/>
-    <button class="btn btn-lime" onclick="doCreate()">Создать игру</button>
-    <div class="divider">или</div>
+    <!-- Shown only when joining via invite link -->
     <div id="url-join-section" style="display:none; flex-direction:column; gap:10px">
       <input id="room-url-input" class="inp" type="text" maxlength="6"
              style="text-transform:uppercase;letter-spacing:.2em;font-weight:700;font-size:1.1rem;text-align:center" readonly/>
       <button class="btn btn-lime" onclick="doJoinUrl()">Войти в комнату</button>
     </div>
+    <!-- Shown when no invite link (normal home screen) -->
     <div id="create-section" style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-lime" onclick="doCreate()">Создать игру</button>
+      <div class="divider">или</div>
       <input id="room-manual-input" class="inp" type="text" placeholder="КОД КОМНАТЫ"
              maxlength="6" autocomplete="off"
              style="text-transform:uppercase;letter-spacing:.14em;font-weight:700;text-align:center"/>
