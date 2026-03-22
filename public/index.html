@@ -448,8 +448,8 @@
   #win-banner {
     display: none;
     position: fixed; inset: 0; z-index: 1000;
-    flex-direction: column; align-items: center; justify-content: flex-end;
-    padding-bottom: max(60px, env(safe-area-inset-bottom, 60px));
+    flex-direction: column; align-items: center; justify-content: center;
+    padding: 0;
   }
   #win-banner.show { display: flex; }
 
@@ -463,26 +463,29 @@
     -webkit-backdrop-filter: blur(12px);
   }
 
+  /* Wrapper: stars + ribbon/button at fixed position; char overlaps from below */
   .wb-content {
     display: flex; flex-direction: column; align-items: center;
     width: 100%; max-width: 400px; padding: 0 24px;
+    margin-top: -10vh; /* shift whole block upward */
   }
 
   /* Stars */
   .wb-stars {
     display: flex; align-items: flex-end; justify-content: center; gap: 10px;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+    position: relative; z-index: 3;
   }
   .wb-stars .star { color: #ffd700; line-height: 1; }
   .wb-stars .star.sm { font-size: 2.2rem; }
   .wb-stars .star.lg { font-size: 3.4rem; }
 
-  /* Character */
+  /* Character — behind ribbon */
   .wb-char {
-    width: 72%; max-width: 270px;
+    width: 78%; max-width: 290px;
     filter: drop-shadow(0 16px 40px rgba(0,0,0,.55));
-    margin-bottom: -18px;
-    position: relative; z-index: 2;
+    margin-bottom: -30px; /* overlap ribbon from top */
+    position: relative; z-index: 1; /* BEHIND ribbon */
     animation: wb-pop .5s cubic-bezier(.2,1.4,.4,1) both;
   }
   @keyframes wb-pop {
@@ -490,7 +493,7 @@
     to   { opacity:1; transform:none; }
   }
 
-  /* Ribbon */
+  /* Ribbon — in front of character */
   .wb-ribbon {
     width: 100%; max-width: 320px;
     padding: 16px 48px;
@@ -498,8 +501,8 @@
     font-size: clamp(1.8rem, 8vw, 2.6rem);
     font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
     clip-path: polygon(18px 0,calc(100% - 18px) 0,100% 50%,calc(100% - 18px) 100%,18px 100%,0 50%);
-    position: relative; z-index: 1;
-    animation: wb-ribbon-in .4s .15s ease both;
+    position: relative; z-index: 2; /* IN FRONT of character */
+    animation: wb-ribbon-in .4s .1s ease both;
   }
   @keyframes wb-ribbon-in {
     from { opacity:0; transform:scaleX(.6); }
@@ -510,20 +513,22 @@
 
   /* Subtitle */
   .wb-subtitle {
-    margin-top: 18px;
+    margin-top: 20px;
     font-size: clamp(.9rem, 4vw, 1.1rem);
     font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
     color: rgba(255,255,255,.85); text-align: center;
+    position: relative; z-index: 3;
   }
 
   /* Button */
   .wb-btn {
-    margin-top: 28px; width: 200px;
+    margin-top: 24px; width: 200px;
     background: transparent;
     border: 2px solid rgba(255,255,255,.45);
     color: var(--white); border-radius: 50px;
     font-size: 15px; font-weight: 800; padding: 14px 24px; letter-spacing: .08em;
     transition: background .15s;
+    position: relative; z-index: 3;
   }
   .wb-btn:active { background: rgba(255,255,255,.15); transform: scale(.97); }
 
