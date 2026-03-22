@@ -387,9 +387,9 @@
   .card-front { background-image: url(/img/card-default.png); background-color: #e8e0d0; }
 
   /* Captain color hints on front */
-  .card.hint-red     .card-front { background-image: url(/img/card-red1.png); }
-  .card.hint-blue    .card-front { background-image: url(/img/card-blue1.png); }
-  .card.hint-neutral .card-front { background-image: url(/img/card-neutral.png); }
+  .card.hint-red      .card-front { background-image: url(/img/card-red.png); }
+  .card.hint-blue     .card-front { background-image: url(/img/card-blue.png); }
+  .card.hint-neutral  .card-front { background-image: url(/img/card-neutral.png); }
   .card.hint-assassin .card-front { background-image: url(/img/card-death.png); }
 
   /* Captain view: dark overlay on revealed card image, text stays fully opaque */
@@ -417,11 +417,8 @@
   }
 
   /* Back: revealed card by type */
-  .card.revealed-red1     .card-back { background-image: url(/img/card-red1.png); }
-  .card.revealed-red2     .card-back { background-image: url(/img/card-red2.png); }
-  .card.revealed-red3     .card-back { background-image: url(/img/card-red3.png); }
-  .card.revealed-blue1    .card-back { background-image: url(/img/card-blue1.png); }
-  .card.revealed-blue2    .card-back { background-image: url(/img/card-blue2.png); }
+  .card.revealed-red      .card-back { background-image: url(/img/card-red.png); }
+  .card.revealed-blue     .card-back { background-image: url(/img/card-blue.png); }
   .card.revealed-neutral  .card-back { background-image: url(/img/card-neutral.png); }
   .card.revealed-assassin .card-back { background-image: url(/img/card-death.png); }
 
@@ -953,12 +950,9 @@ function generateQR(url) {
 // ══════════════════════════════════════════════════════
 //  CARD IMAGE
 // ══════════════════════════════════════════════════════
-function revealedClass(type, fig) {
-  if (type === 'red') {
-    const v = (fig % 3) + 1;
-    return 'revealed-red' + v;
-  }
-  if (type === 'blue')     return 'revealed-blue' + ((fig % 2) + 1);
+function revealedClass(type) {
+  if (type === 'red')      return 'revealed-red';
+  if (type === 'blue')     return 'revealed-blue';
   if (type === 'neutral')  return 'revealed-neutral';
   if (type === 'assassin') return 'revealed-assassin';
   return '';
@@ -1041,7 +1035,7 @@ socket.on('state', data => {
 
     // Assign revealed class
     if (nowRevealed) {
-      const rc = revealedClass(card.type, card.fig);
+      const rc = revealedClass(card.type);
       if (rc) el.classList.add(rc);
     }
 
