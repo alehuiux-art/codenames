@@ -281,7 +281,7 @@
   .turn-banner {
     border-radius: 10px; padding: 6px 12px;
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 4px;
+    margin-top: 4px;
   }
   .turn-banner.team-blue {
     background: linear-gradient(90deg, rgba(54,43,229,.35) 0%, rgba(54,43,229,.15) 100%);
@@ -310,7 +310,7 @@
   .turn-label.mine { animation: pulse-banner 1.8s ease-in-out infinite; }
 
   /* Teams — two compact rows */
-  .teams-strip { display: flex; flex-direction: column; gap: 2px; margin-bottom: 3px; }
+  .teams-strip { display: flex; flex-direction: column; gap: 2px; }
 
   .team-row {
     display: flex; align-items: baseline; gap: 5px;
@@ -745,10 +745,6 @@
 <div id="screen-game" class="screen">
   <!-- Header: turn + teams -->
   <div class="game-header">
-    <div class="turn-banner" id="turn-banner">
-      <div class="turn-label" id="turn-label">—</div>
-      <div class="turn-scores" id="turn-scores"></div>
-    </div>
     <div class="teams-strip" id="teams-strip">
       <div class="team-row blue">
         <span class="team-row-label">🐱 Котики</span>
@@ -758,6 +754,10 @@
         <span class="team-row-label">🐶 Пёсики</span>
         <span class="team-row-names" id="team-red-names"></span>
       </div>
+    </div>
+    <div class="turn-banner" id="turn-banner">
+      <div class="turn-label" id="turn-label">—</div>
+      <div class="turn-scores" id="turn-scores"></div>
     </div>
   </div>
 
