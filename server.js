@@ -8,7 +8,9 @@ const crypto    = require('crypto');
 
 const app    = express();
 const httpSv = http.createServer(app);
-const io     = new Server(httpSv);
+const io     = new Server(httpSv, {
+  transports: ['websocket'],
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 

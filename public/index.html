@@ -831,7 +831,7 @@ function getPortrait(type, fig) {
 // ══════════════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════════════
-const socket = io();
+const socket = io({ transports: ['websocket'] });
 let myTeam = null, myRole = null, isHost = false, myName = null, myRoomId = null;
 let prevRevealed = [];     // track which cards were previously revealed
 let dossierDone  = false;  // has the role dossier been shown this game
