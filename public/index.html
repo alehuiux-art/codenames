@@ -459,6 +459,64 @@
   }
   #btn-new-game:active { background: rgba(255,255,255,.08); }
 
+  /* ── Turn popup ── */
+  #turn-popup {
+    display: none;
+    position: fixed; inset: 0; z-index: 800;
+    background: rgba(3,15,21,.7);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    align-items: center; justify-content: center;
+  }
+  #turn-popup.show { display: flex; }
+
+  .turn-popup-card {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 10px;
+    padding: 32px 28px 24px;
+    border-radius: 24px;
+    width: min(320px, 88vw);
+    animation: tp-pop .3s cubic-bezier(.2,1.4,.4,1) both;
+  }
+  @keyframes tp-pop {
+    from { opacity:0; transform: scale(.75); }
+    to   { opacity:1; transform: none; }
+  }
+  .turn-popup-card.team-red  {
+    background: linear-gradient(160deg,#4a0808,#a01010 60%,#c82020);
+    border: 1.5px solid rgba(251,41,40,.5);
+    box-shadow: 0 0 60px rgba(251,41,40,.35);
+  }
+  .turn-popup-card.team-blue {
+    background: linear-gradient(160deg,#06063a,#1a14a0 60%,#2820cc);
+    border: 1.5px solid rgba(54,43,229,.5);
+    box-shadow: 0 0 60px rgba(54,43,229,.35);
+  }
+  .turn-popup-label {
+    font-size: 12px; font-weight: 700; letter-spacing: .14em;
+    text-transform: uppercase; color: rgba(255,255,255,.5);
+  }
+  .turn-popup-emoji { font-size: 3rem; line-height: 1; }
+  .turn-popup-team {
+    font-size: clamp(1.6rem, 7vw, 2.2rem);
+    font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+    text-align: center; color: #fff;
+  }
+  .turn-popup-sub {
+    font-size: 13px; font-weight: 400;
+    color: rgba(255,255,255,.6); text-align: center;
+  }
+  #btn-turn-ok {
+    margin-top: 8px; width: 160px;
+    background: rgba(255,255,255,.15);
+    border: 1.5px solid rgba(255,255,255,.3);
+    color: #fff; border-radius: 50px;
+    font-size: 15px; font-weight: 800; padding: 12px 20px;
+    letter-spacing: .08em; font-family: inherit; cursor: pointer;
+    transition: background .15s;
+  }
+  #btn-turn-ok:active { background: rgba(255,255,255,.28); transform: scale(.97); }
+
   /* ── Win banner ── */
   #win-banner {
     display: none;
@@ -698,6 +756,19 @@
 </div>
 
 <!-- ════════════════════════════
+     TURN POPUP
+════════════════════════════ -->
+<div id="turn-popup">
+  <div class="turn-popup-card" id="turn-popup-card">
+    <div class="turn-popup-label">Следующий ход</div>
+    <div class="turn-popup-emoji" id="turn-popup-emoji">🐱</div>
+    <div class="turn-popup-team" id="turn-popup-team">Котики</div>
+    <div class="turn-popup-sub" id="turn-popup-sub">Капитан даёт подсказку</div>
+    <button id="btn-turn-ok" onclick="closeTurnPopup()">OK</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════
      WIN BANNER
 ════════════════════════════ -->
 <div id="win-banner">
@@ -730,6 +801,7 @@ const socket = io({ transports: ['websocket'] });
 
 let myTeam = null, myRole = null, isHost = false, myName = null, myRoomId = null;
 let prevRevealed = [];
+let prevTurnTeam  = null;
 let dossierDone  = false;
 let qrGenerated  = false;
 
@@ -894,8 +966,9 @@ socket.on('lobby', ({ players, hostName }) => {
 });
 
 socket.on('game_started', () => {
-  dossierDone = false;
-  prevRevealed = [];
+  dossierDone  = false;
+  prevRevealed  = [];
+  prevTurnTeam  = null;
   document.getElementById('win-banner').className = '';
   document.getElementById('btn-new-game').style.display = isHost ? 'block' : 'none';
   showScreen('game');
@@ -974,7 +1047,12 @@ socket.on('state', data => {
 
   prevRevealed = cards.map(c => c.revealed);
 
-  if (winner) showWin(winner, winReason);
+  if (winner) {
+    showWin(winner, winReason);
+  } else if (prevTurnTeam !== null && prevTurnTeam !== currentTeam) {
+    showTurnPopup(currentTeam);
+  }
+  prevTurnTeam = currentTeam;
 });
 
 socket.on('err', showToast);
@@ -1043,6 +1121,30 @@ function makePlayerItem(p) {
 // ══════════════════════════════════════════════════════
 //  WIN
 // ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+//  TURN POPUP
+// ══════════════════════════════════════════════════════
+function showTurnPopup(team) {
+  const isRed   = team === 'red';
+  const name    = isRed ? 'Пёсики' : 'Котики';
+  const emoji   = isRed ? '🐶' : '🐱';
+  const isMine  = team === myTeam;
+
+  document.getElementById('turn-popup-emoji').textContent = emoji;
+  document.getElementById('turn-popup-team').textContent  = name;
+  document.getElementById('turn-popup-sub').textContent   = isMine
+    ? 'Ваш ход! Капитан даёт подсказку.' : 'Ходит соперник. Ждите...';
+
+  const card = document.getElementById('turn-popup-card');
+  card.className = 'turn-popup-card team-' + team;
+
+  document.getElementById('turn-popup').classList.add('show');
+}
+
+function closeTurnPopup() {
+  document.getElementById('turn-popup').classList.remove('show');
+}
+
 function showWin(winner, reason) {
   const banner   = document.getElementById('win-banner');
   const charEl   = document.getElementById('wb-char');
