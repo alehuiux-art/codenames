@@ -846,13 +846,26 @@ function updateHeader(currentTeam, redLeft, blueLeft, mt, players) {
   const blues = players.filter(p => p.team === 'blue');
   const reds  = players.filter(p => p.team === 'red');
 
-  function renderTeamNames(elId, members) {
-    document.getElementById(elId).textContent = members
-      .map(p => (p.role === 'captain' ? '👑' : '') + p.name + (p.online === false ? '✗' : ''))
-      .join('  ·  ');
+  function renderTeamNames(elId, members, color) {
+    const el = document.getElementById(elId);
+    el.innerHTML = '';
+    const sorted = [...members].sort((a, b) => (a.role === 'captain' ? -1 : b.role === 'captain' ? 1 : 0));
+    sorted.forEach((p, i) => {
+      if (i > 0) {
+        const sep = document.createElement('span');
+        sep.textContent = '  ·  ';
+        sep.style.color = 'rgba(255,255,255,.3)';
+        el.appendChild(sep);
+      }
+      const span = document.createElement('span');
+      span.style.color = color;
+      if (p.online === false) span.style.opacity = '.4';
+      span.textContent = (p.role === 'captain' ? '★ ' : '') + p.name;
+      el.appendChild(span);
+    });
   }
-  renderTeamNames('team-blue-names', blues);
-  renderTeamNames('team-red-names',  reds);
+  renderTeamNames('team-blue-names', blues, '#7aabff');
+  renderTeamNames('team-red-names',  reds,  '#ff8080');
 }
 
 function updateGameBar(currentTeam, mt, winner) {
